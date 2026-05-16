@@ -1,10 +1,58 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 
 export default function GoalsPage() {
 
   const [showModal, setShowModal] = useState(false);
+  const [goals, setGoals] = useState([
+  {
+    title: "Increase Sales Revenue",
+    description: "Improve quarterly sales performance by expanding enterprise client acquisition.",
+    progress: 78,
+    target: "₹10,00,000",
+    achievement: "₹7,80,000",
+    weightage: 25,
+    status: "On Track",
+  },
+  {
+    title: "Customer Satisfaction",
+    description: "Increase customer satisfaction score through faster issue resolution.",
+    progress: 62,
+    target: "95%",
+    achievement: "62%",
+    weightage: 20,
+    status: "In Progress",
+  },
+]);
+
+const [title, setTitle] = useState("");
+const [description, setDescription] = useState("");
+const [target, setTarget] = useState("");
+const [weightage, setWeightage] = useState("");
+
+const handleAddGoal = (e: FormEvent) => {
+  e.preventDefault();
+
+  const newGoal = {
+    title,
+    description,
+    progress: 0,
+    target,
+    achievement: "0",
+    weightage,
+    status: "Just Started",
+  };
+
+  setGoals([newGoal, ...goals]);
+
+  setTitle("");
+  setDescription("");
+  setTarget("");
+  setWeightage("");
+
+  setShowModal(false);
+};
 
   return (
     <main className="min-h-screen bg-black text-white flex">
@@ -73,143 +121,82 @@ export default function GoalsPage() {
         {/* Goals Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* Goal Card */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+  {goals.map((goal, index) => (
 
-            <div className="flex items-center justify-between mb-5">
+    <div
+      key={index}
+      className="bg-white/5 border border-white/10 rounded-3xl p-6"
+    >
 
-              <div>
-                <h2 className="text-2xl font-bold">
-                  Increase Sales Revenue
-                </h2>
+      <div className="flex items-center justify-between mb-5">
 
-                <p className="text-gray-400 text-sm mt-1">
-                  Weightage: 25%
-                </p>
-              </div>
+        <div>
+          <h2 className="text-2xl font-bold">
+            {goal.title}
+          </h2>
 
-              <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm">
-                On Track
-              </span>
+          <p className="text-gray-400 text-sm mt-1">
+            Weightage: {goal.weightage}%
+          </p>
+        </div>
 
-            </div>
+        <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
+          {goal.status}
+        </span>
 
-            <p className="text-gray-300 mb-6">
-              Improve quarterly sales performance
-              by expanding enterprise client acquisition.
-            </p>
+      </div>
 
-            {/* Progress */}
-            <div className="mb-4">
+      <p className="text-gray-300 mb-6">
+        {goal.description}
+      </p>
 
-              <div className="flex justify-between mb-2 text-sm text-gray-400">
-                <span>Progress</span>
-                <span>78%</span>
-              </div>
+      <div className="mb-4">
 
-              <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+        <div className="flex justify-between mb-2 text-sm text-gray-400">
+          <span>Progress</span>
+          <span>{goal.progress}%</span>
+        </div>
 
-                <div className="bg-blue-500 h-full w-[78%] rounded-full"></div>
+        <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
 
-              </div>
-
-            </div>
-
-            {/* Goal Details */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-
-              <div className="bg-black/30 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm">
-                  Target
-                </p>
-
-                <h3 className="text-xl font-bold mt-1">
-                  ₹10,00,000
-                </h3>
-              </div>
-
-              <div className="bg-black/30 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm">
-                  Achievement
-                </p>
-
-                <h3 className="text-xl font-bold mt-1">
-                  ₹7,80,000
-                </h3>
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Second Goal */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-
-            <div className="flex items-center justify-between mb-5">
-
-              <div>
-                <h2 className="text-2xl font-bold">
-                  Customer Satisfaction
-                </h2>
-
-                <p className="text-gray-400 text-sm mt-1">
-                  Weightage: 20%
-                </p>
-              </div>
-
-              <span className="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm">
-                In Progress
-              </span>
-
-            </div>
-
-            <p className="text-gray-300 mb-6">
-              Increase customer satisfaction score
-              through faster issue resolution.
-            </p>
-
-            <div className="mb-4">
-
-              <div className="flex justify-between mb-2 text-sm text-gray-400">
-                <span>Progress</span>
-                <span>62%</span>
-              </div>
-
-              <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-
-                <div className="bg-purple-500 h-full w-[62%] rounded-full"></div>
-
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-6">
-
-              <div className="bg-black/30 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm">
-                  Target
-                </p>
-
-                <h3 className="text-xl font-bold mt-1">
-                  95%
-                </h3>
-              </div>
-
-              <div className="bg-black/30 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm">
-                  Achievement
-                </p>
-
-                <h3 className="text-xl font-bold mt-1">
-                  62%
-                </h3>
-              </div>
-
-            </div>
-
-          </div>
+          <div
+            className="bg-blue-500 h-full rounded-full"
+            style={{ width: `${goal.progress}%` }}
+          ></div>
 
         </div>
+
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mt-6">
+
+        <div className="bg-black/30 rounded-2xl p-4">
+          <p className="text-gray-400 text-sm">
+            Target
+          </p>
+
+          <h3 className="text-xl font-bold mt-1">
+            {goal.target}
+          </h3>
+        </div>
+
+        <div className="bg-black/30 rounded-2xl p-4">
+          <p className="text-gray-400 text-sm">
+            Achievement
+          </p>
+
+          <h3 className="text-xl font-bold mt-1">
+            {goal.achievement}
+          </h3>
+        </div>
+
+      </div>
+
+    </div>
+
+  ))}
+
+</div>
 
       </section>
 
@@ -235,7 +222,7 @@ export default function GoalsPage() {
 
             </div>
 
-            <form className="space-y-5">
+            <form onSubmit={handleAddGoal} className="space-y-5">
 
               <div>
                 <label className="block mb-2 text-gray-300">
@@ -243,7 +230,10 @@ export default function GoalsPage() {
                 </label>
 
                 <input
+
                   type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="Increase Revenue"
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
                 />
@@ -255,6 +245,9 @@ export default function GoalsPage() {
                 </label>
 
                 <textarea
+                
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the goal..."
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 h-32"
                 ></textarea>
@@ -268,7 +261,10 @@ export default function GoalsPage() {
                   </label>
 
                   <input
+                    
                     type="text"
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
                     placeholder="₹10,00,000"
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
                   />
@@ -280,7 +276,10 @@ export default function GoalsPage() {
                   </label>
 
                   <input
+                
                     type="number"
+                    value={weightage}
+                    onChange={(e) => setWeightage(e.target.value)}
                     placeholder="25"
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
                   />
