@@ -1,6 +1,11 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function GoalsPage() {
+
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <main className="min-h-screen bg-black text-white flex">
 
@@ -54,9 +59,14 @@ export default function GoalsPage() {
             </p>
           </div>
 
-          <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-xl font-semibold">
-            + Create Goal
+          <button
+               onClick={() => setShowModal(true)}
+               className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-xl font-semibold"
+          >
+             + Create Goal
           </button>
+        
+          
 
         </div>
 
@@ -203,6 +213,95 @@ export default function GoalsPage() {
 
       </section>
 
+          {/* Modal */}
+      {showModal && (
+
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-6 z-50">
+
+          <div className="w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-3xl p-8">
+
+            <div className="flex items-center justify-between mb-8">
+
+              <h2 className="text-3xl font-bold">
+                Create Goal
+              </h2>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+
+            </div>
+
+            <form className="space-y-5">
+
+              <div>
+                <label className="block mb-2 text-gray-300">
+                  Goal Title
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Increase Revenue"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-gray-300">
+                  Description
+                </label>
+
+                <textarea
+                  placeholder="Describe the goal..."
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 h-32"
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-2 gap-5">
+
+                <div>
+                  <label className="block mb-2 text-gray-300">
+                    Target
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="₹10,00,000"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-gray-300">
+                    Weightage %
+                  </label>
+
+                  <input
+                    type="number"
+                    placeholder="25"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+                  />
+                </div>
+
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 transition py-3 rounded-xl font-semibold"
+              >
+                Save Goal
+              </button>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
     </main>
   );
 }
