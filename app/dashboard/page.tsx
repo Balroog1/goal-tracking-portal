@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-black text-white flex">
@@ -11,13 +13,19 @@ export default function DashboardPage() {
 
         <nav className="space-y-3">
 
-          <button className="w-full text-left px-4 py-3 rounded-xl bg-blue-600">
+          <Link
+            href="/dashboard"
+            className="block px-4 py-3 rounded-xl bg-blue-600"
+          >
             Dashboard
-          </button>
+          </Link>
 
-          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          <Link
+            href="/goals"
+            className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+          >
             Goals
-          </button>
+          </Link>
 
           <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 transition">
             Check-ins
