@@ -5,63 +5,86 @@ import { useState, FormEvent } from "react";
 export default function GoalsPage() {
 
   const [showModal, setShowModal] = useState(false);
+
   const [goals, setGoals] = useState([
-  {
-    title: "Increase Sales Revenue",
-    description: "Improve quarterly sales performance by expanding enterprise client acquisition.",
-    progress: 78,
-    target: "₹10,00,000",
-    achievement: "₹7,80,000",
-    weightage: 25,
-    status: "On Track",
-  },
-  {
-    title: "Customer Satisfaction",
-    description: "Increase customer satisfaction score through faster issue resolution.",
-    progress: 62,
-    target: "95%",
-    achievement: "62%",
-    weightage: 20,
-    status: "In Progress",
-  },
-]);
+    {
+      title: "Increase Sales Revenue",
+      description:
+        "Improve quarterly sales performance by expanding enterprise client acquisition.",
+      progress: 78,
+      target: "₹10,00,000",
+      achievement: "₹7,80,000",
+      weightage: 25,
+      status: "On Track",
+    },
+    {
+      title: "Customer Satisfaction",
+      description:
+        "Increase customer satisfaction score through faster issue resolution.",
+      progress: 62,
+      target: "95%",
+      achievement: "62%",
+      weightage: 20,
+      status: "In Progress",
+    },
+  ]);
 
-const [title, setTitle] = useState("");
-const [description, setDescription] = useState("");
-const [target, setTarget] = useState("");
-const [weightage, setWeightage] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [target, setTarget] = useState("");
+  const [weightage, setWeightage] = useState("");
 
-const handleAddGoal = (e: FormEvent) => {
+  const handleAddGoal = (e: FormEvent) => {
 
-  e.preventDefault();
+    e.preventDefault();
 
-  const newGoal = {
-    title,
-    description,
-    progress: 0,
-    target,
-    achievement: "0",
-    weightage,
-    status: "Just Started",
+    const newGoal = {
+      title,
+      description,
+      progress: 0,
+      target,
+      achievement: "0",
+      weightage,
+      status: "Just Started",
+    };
+
+    setGoals([newGoal, ...goals]);
+
+    setTitle("");
+    setDescription("");
+    setTarget("");
+    setWeightage("");
+
+    setShowModal(false);
   };
 
-  setGoals([newGoal, ...goals]);
+  const handleDeleteGoal = (indexToDelete: number) => {
 
-  setTitle("");
-  setDescription("");
-  setTarget("");
-  setWeightage("");
+    const updatedGoals = goals.filter(
+      (_, index) => index !== indexToDelete
+    );
 
-  setShowModal(false);
-};
+    setGoals(updatedGoals);
+  };
 
-const handleDeleteGoal = (indexToDelete: number) => {
-  const updatedGoals = goals.filter(
-    (_, index) => index !== indexToDelete
-  );
+  const updateProgress = (
+    indexToUpdate: number,
+    amount: number
+  ) => {
 
-  setGoals(updatedGoals);
-};
+    const updatedGoals = [...goals];
+
+    updatedGoals[indexToUpdate].progress =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          updatedGoals[indexToUpdate].progress + amount
+        )
+      );
+
+    setGoals(updatedGoals);
+  };
 
   return (
     <main className="min-h-screen bg-black text-white flex">
@@ -117,110 +140,127 @@ const handleDeleteGoal = (indexToDelete: number) => {
           </div>
 
           <button
-               onClick={() => setShowModal(true)}
-               className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-xl font-semibold"
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-xl font-semibold"
           >
-             + Create Goal
+            + Create Goal
           </button>
-        
-          
 
         </div>
 
         {/* Goals Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-  {goals.map((goal, index) => (
+          {goals.map((goal, index) => (
 
-    <div
-      key={index}
-      className="bg-white/5 border border-white/10 rounded-3xl p-6"
-    >
+            <div
+              key={index}
+              className="bg-white/5 border border-white/10 rounded-3xl p-6"
+            >
 
-      <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-5">
 
-        <div>
-          <h2 className="text-2xl font-bold">
-            {goal.title}
-          </h2>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {goal.title}
+                  </h2>
 
-          <p className="text-gray-400 text-sm mt-1">
-            Weightage: {goal.weightage}%
-          </p>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Weightage: {goal.weightage}%
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+
+                  <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
+                    {goal.status}
+                  </span>
+
+                  <button
+                    onClick={() => handleDeleteGoal(index)}
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-xl text-sm transition"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+              <p className="text-gray-300 mb-6">
+                {goal.description}
+              </p>
+
+              <div className="mb-4">
+
+                <div className="flex justify-between mb-2 text-sm text-gray-400">
+                  <span>Progress</span>
+                  <span>{goal.progress}%</span>
+                </div>
+
+                <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+
+                  <div
+                    className="bg-blue-500 h-full rounded-full"
+                    style={{ width: `${goal.progress}%` }}
+                  ></div>
+
+                </div>
+
+              </div>
+
+              {/* Progress Buttons */}
+              <div className="flex gap-3 mt-4">
+
+                <button
+                  onClick={() => updateProgress(index, -10)}
+                  className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-xl transition"
+                >
+                  -10%
+                </button>
+
+                <button
+                  onClick={() => updateProgress(index, 10)}
+                  className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-xl transition"
+                >
+                  +10%
+                </button>
+
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-6">
+
+                <div className="bg-black/30 rounded-2xl p-4">
+                  <p className="text-gray-400 text-sm">
+                    Target
+                  </p>
+
+                  <h3 className="text-xl font-bold mt-1">
+                    {goal.target}
+                  </h3>
+                </div>
+
+                <div className="bg-black/30 rounded-2xl p-4">
+                  <p className="text-gray-400 text-sm">
+                    Achievement
+                  </p>
+
+                  <h3 className="text-xl font-bold mt-1">
+                    {goal.achievement}
+                  </h3>
+                </div>
+
+              </div>
+
+            </div>
+
+          ))}
+
         </div>
-
-        <div className="flex items-center gap-3">
-
-          <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
-           {goal.status}
-          </span>
-
-          <button
-            onClick={() => handleDeleteGoal(index)}
-            className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-xl text-sm transition"
-          >
-            Delete
-          </button>
-
-        </div>
-
-      </div>
-
-      <p className="text-gray-300 mb-6">
-        {goal.description}
-      </p>
-
-      <div className="mb-4">
-
-        <div className="flex justify-between mb-2 text-sm text-gray-400">
-          <span>Progress</span>
-          <span>{goal.progress}%</span>
-        </div>
-
-        <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-
-          <div
-            className="bg-blue-500 h-full rounded-full"
-            style={{ width: `${goal.progress}%` }}
-          ></div>
-
-        </div>
-
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mt-6">
-
-        <div className="bg-black/30 rounded-2xl p-4">
-          <p className="text-gray-400 text-sm">
-            Target
-          </p>
-
-          <h3 className="text-xl font-bold mt-1">
-            {goal.target}
-          </h3>
-        </div>
-
-        <div className="bg-black/30 rounded-2xl p-4">
-          <p className="text-gray-400 text-sm">
-            Achievement
-          </p>
-
-          <h3 className="text-xl font-bold mt-1">
-            {goal.achievement}
-          </h3>
-        </div>
-
-      </div>
-
-    </div>
-
-  ))}
-
-</div>
 
       </section>
 
-          {/* Modal */}
+      {/* Modal */}
       {showModal && (
 
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-6 z-50">
@@ -250,7 +290,6 @@ const handleDeleteGoal = (indexToDelete: number) => {
                 </label>
 
                 <input
-
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -265,7 +304,6 @@ const handleDeleteGoal = (indexToDelete: number) => {
                 </label>
 
                 <textarea
-                
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the goal..."
@@ -281,7 +319,6 @@ const handleDeleteGoal = (indexToDelete: number) => {
                   </label>
 
                   <input
-                    
                     type="text"
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
@@ -296,7 +333,6 @@ const handleDeleteGoal = (indexToDelete: number) => {
                   </label>
 
                   <input
-                
                     type="number"
                     value={weightage}
                     onChange={(e) => setWeightage(e.target.value)}
@@ -321,6 +357,7 @@ const handleDeleteGoal = (indexToDelete: number) => {
         </div>
 
       )}
+
     </main>
   );
 }
