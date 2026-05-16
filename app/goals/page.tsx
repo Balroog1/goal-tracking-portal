@@ -32,6 +32,7 @@ const [target, setTarget] = useState("");
 const [weightage, setWeightage] = useState("");
 
 const handleAddGoal = (e: FormEvent) => {
+
   e.preventDefault();
 
   const newGoal = {
@@ -52,6 +53,14 @@ const handleAddGoal = (e: FormEvent) => {
   setWeightage("");
 
   setShowModal(false);
+};
+
+const handleDeleteGoal = (indexToDelete: number) => {
+  const updatedGoals = goals.filter(
+    (_, index) => index !== indexToDelete
+  );
+
+  setGoals(updatedGoals);
 };
 
   return (
@@ -140,9 +149,20 @@ const handleAddGoal = (e: FormEvent) => {
           </p>
         </div>
 
-        <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
-          {goal.status}
-        </span>
+        <div className="flex items-center gap-3">
+
+          <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
+           {goal.status}
+          </span>
+
+          <button
+            onClick={() => handleDeleteGoal(index)}
+            className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-xl text-sm transition"
+          >
+            Delete
+          </button>
+
+        </div>
 
       </div>
 
