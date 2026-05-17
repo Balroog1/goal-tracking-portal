@@ -10,6 +10,10 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 export default function AnalyticsPage() {
@@ -37,7 +41,18 @@ export default function AnalyticsPage() {
   },
 ];
 
-  return (
+const pieData = [
+  {
+    name: "Completed",
+    value: completedGoals,
+  },
+  {
+    name: "Remaining",
+    value: totalGoals - completedGoals,
+  },
+];
+
+return (
     <main className="min-h-screen bg-black text-white flex">
 
       {/* Sidebar */}
@@ -70,10 +85,46 @@ export default function AnalyticsPage() {
         />
 
       </BarChart>
+      
 
     </ResponsiveContainer>
 
   </div>
+
+  <div className="bg-white/5 border border-white/10 rounded-3xl p-8 h-[450px] mt-10">
+
+  <h2 className="text-2xl font-bold mb-6">
+    Goal Completion Ratio
+  </h2>
+
+  <ResponsiveContainer width="100%" height={350}>
+
+    <PieChart>
+
+      <Pie
+        data={pieData}
+        dataKey="value"
+        nameKey="name"
+        outerRadius={120}
+        innerRadius={70}
+        paddingAngle={5}
+      >
+
+        <Cell fill="#22c55e" />
+
+        <Cell fill="#3b82f6" />
+
+      </Pie>
+
+      <Tooltip />
+
+    </PieChart>
+
+  </ResponsiveContainer>
+
+</div>
+
+    
 
    </div>
 
