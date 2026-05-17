@@ -1,16 +1,30 @@
 import { cookies } from "next/headers";
 import { type AppRole, type AuthSession } from "./goal-types";
 import { parseSession, serializeSession, SESSION_COOKIE } from "./session";
+import { getSupabaseAdmin } from "./supabase";
 
-const DEMO_ACCOUNTS: Record<string, AuthSession> = {
-  "employee@demo.com": { email: "employee@demo.com", role: "employee", label: "Employee" },
-  "manager@demo.com": { email: "manager@demo.com", role: "manager", label: "Manager" },
-  "admin@demo.com": { email: "admin@demo.com", role: "admin", label: "Admin" },
-};
-
-export const getSessionFromEmail = (email: string): AuthSession | null => {
+export const getSessionFromEmail = async (email: string): Promise<AuthSession | null> => {
   const normalized = email.trim().toLowerCase();
-  return DEMO_ACCOUNTS[normalized] ?? null;
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("users")
+    .select("email, name, role")
+    .eq("email", normalized)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    email: data.email,
+    role: data.role as AppRole,
+    label: data.name,
+  };
 };
 
 export const getCurrentSession = async (): Promise<AuthSession | null> => {

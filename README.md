@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Supabase Setup
+
+This project now uses Supabase for persistence.
+
+Create a `.env.local` file with:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+Then run the SQL in [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor to create the tables and seed demo data.
+
 ## Getting Started
 
 First, run the development server:

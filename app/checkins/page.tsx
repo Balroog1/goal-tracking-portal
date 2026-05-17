@@ -143,7 +143,7 @@ export default function CheckinsPage() {
 
     try {
       const response = await fetch(
-        `/api/checkins?quarter=${nextQuarter}`,
+        `/api/achievements?quarter=${nextQuarter}`,
         { cache: "no-store" },
       );
       const payload = (await response.json()) as {
@@ -196,7 +196,7 @@ export default function CheckinsPage() {
 
       try {
         const response = await fetch(
-          `/api/checkins?quarter=${quarter}`,
+          `/api/achievements?quarter=${quarter}`,
           { cache: "no-store" },
         );
         const payload = (await response.json()) as {
@@ -282,7 +282,7 @@ export default function CheckinsPage() {
 
     try {
       const form = forms[goalId];
-      const response = await fetch("/api/checkins", {
+      const response = await fetch("/api/achievements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

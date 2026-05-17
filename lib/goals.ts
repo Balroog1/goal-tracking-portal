@@ -1,7 +1,6 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import "server-only";
 
+import { getSupabaseAdmin } from "./supabase";
 import {
   DEFAULT_EMPLOYEE_ID,
   GOAL_LIMIT,
@@ -12,174 +11,139 @@ import {
   type AuditReport,
   type AuditReportSummary,
   type CheckInSummary,
-  type GoalCheckIn,
   type GoalActorRole,
+  type GoalApprovalStatus,
   type GoalChange,
+  type GoalCheckIn,
   type GoalInput,
   type GoalProgressRecord,
-  type GoalRecord,
-  type ManagerGoalSummary,
-  type ProgressDashboard,
-  type GoalSummary,
   type GoalQuarter,
+  type GoalRecord,
+  type GoalStatus,
+  type GoalSummary,
+  type ManagerGoalSummary,
   type MeasurementType,
+  type ProgressDashboard,
   type ProgressScope,
   type ProgressSummary,
 } from "./goal-types";
-
-interface GoalsDatabase {
-  goals: GoalRecord[];
-  checkIns: GoalCheckIn[];
-  auditLog: AuditEntry[];
-}
 
 interface MutationActor {
   role: GoalActorRole;
   label: string;
 }
 
-const DATA_FILE = path.join(process.cwd(), "data", "goals.json");
-
-const defaultDatabase = (): GoalsDatabase => {
-  const now = new Date().toISOString();
-
-  return {
-    goals: [
-      {
-        id: randomUUID(),
-        employeeId: DEFAULT_EMPLOYEE_ID,
-        title: "Increase Sales Revenue",
-        description:
-          "Improve quarterly sales by expanding enterprise client acquisition.",
-        thrustArea: "Revenue Growth",
-        uom: "INR",
-        target: "1000000",
-        weightage: 30,
-        status: "draft",
-        approvalStatus: "not_submitted",
-        isLocked: false,
-        reviewedBy: null,
-        reviewedAt: null,
-        reviewNotes: null,
-        quarter: "Q2",
-        measurementType: "MIN",
-        createdAt: now,
-        updatedAt: now,
-        submittedAt: null,
-      },
-      {
-        id: randomUUID(),
-        employeeId: DEFAULT_EMPLOYEE_ID,
-        title: "Improve Customer Satisfaction",
-        description:
-          "Increase support response quality and reduce repeated escalations.",
-        thrustArea: "Customer Experience",
-        uom: "Percent",
-        target: "95",
-        weightage: 25,
-        status: "draft",
-        approvalStatus: "not_submitted",
-        isLocked: false,
-        reviewedBy: null,
-        reviewedAt: null,
-        reviewNotes: null,
-        quarter: "Q2",
-        measurementType: "MAX",
-        createdAt: now,
-        updatedAt: now,
-        submittedAt: null,
-      },
-      {
-        id: randomUUID(),
-        employeeId: DEFAULT_EMPLOYEE_ID,
-        title: "Process Improvement",
-        description:
-          "Reduce manual work by automating recurring reporting steps.",
-        thrustArea: "Operational Excellence",
-        uom: "Tasks",
-        target: "12",
-        weightage: 20,
-        status: "draft",
-        approvalStatus: "not_submitted",
-        isLocked: false,
-        reviewedBy: null,
-        reviewedAt: null,
-        reviewNotes: null,
-        quarter: "Q2",
-        measurementType: "ZERO",
-        createdAt: now,
-        updatedAt: now,
-        submittedAt: null,
-      },
-      {
-        id: randomUUID(),
-        employeeId: DEFAULT_EMPLOYEE_ID,
-        title: "Leadership Development",
-        description:
-          "Complete manager-led mentoring sessions and share team learnings.",
-        thrustArea: "Capability Building",
-        uom: "Sessions",
-        target: "8",
-        weightage: 25,
-        status: "draft",
-        approvalStatus: "not_submitted",
-        isLocked: false,
-        reviewedBy: null,
-        reviewedAt: null,
-        reviewNotes: null,
-        quarter: "Q2",
-        measurementType: "TIMELINE",
-        createdAt: now,
-        updatedAt: now,
-        submittedAt: null,
-      },
-    ],
-    checkIns: [],
-    auditLog: [],
-  };
+type GoalDbRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  thrust_area: string;
+  uom: string;
+  target: string;
+  weightage: number;
+  status: GoalStatus;
+  approval_status: GoalApprovalStatus;
+  is_locked: boolean;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  quarter: GoalQuarter;
+  measurement_type: MeasurementType;
+  created_at: string;
+  updated_at: string;
+  submitted_at: string | null;
 };
 
-const ensureDatabase = async (): Promise<void> => {
-  await mkdir(path.dirname(DATA_FILE), { recursive: true });
-
-  try {
-    const raw = await readFile(DATA_FILE, "utf8");
-    const parsed = JSON.parse(raw) as Partial<GoalsDatabase>;
-
-    if (!Array.isArray(parsed.goals) || parsed.goals.length === 0 || !Array.isArray(parsed.checkIns)) {
-      await writeFile(DATA_FILE, `${JSON.stringify(defaultDatabase(), null, 2)}\n`, {
-        encoding: "utf8",
-      });
-    }
-  } catch {
-    await writeFile(DATA_FILE, `${JSON.stringify(defaultDatabase(), null, 2)}\n`, {
-      encoding: "utf8",
-    });
-  }
+type AchievementDbRow = {
+  id: string;
+  goal_id: string;
+  employee_id: string;
+  actual_value: string;
+  status: "not_started" | "on_track" | "completed";
+  quarter: GoalQuarter;
+  notes: string | null;
+  progress_percent: number;
+  created_at: string;
+  updated_at: string;
 };
 
-const readDatabase = async (): Promise<GoalsDatabase> => {
-  await ensureDatabase();
-  const raw = await readFile(DATA_FILE, "utf8");
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<GoalsDatabase>;
-
-    return {
-      goals: Array.isArray(parsed.goals) ? parsed.goals : [],
-      checkIns: Array.isArray(parsed.checkIns) ? parsed.checkIns : [],
-      auditLog: Array.isArray(parsed.auditLog) ? parsed.auditLog : [],
-    };
-  } catch {
-    return defaultDatabase();
-  }
+type AuditDbRow = {
+  id: string;
+  goal_id: string | null;
+  employee_id: string | null;
+  action: AuditEntry["action"];
+  performed_by: string;
+  actor_role: GoalActorRole;
+  actor_label: string;
+  timestamp: string;
+  changes: GoalChange[];
 };
 
-const writeDatabase = async (database: GoalsDatabase): Promise<void> => {
-  await ensureDatabase();
-  await writeFile(DATA_FILE, `${JSON.stringify(database, null, 2)}\n`, {
-    encoding: "utf8",
-  });
+// Supabase responses are handled inline at call sites; previous DbResult/DbListResult aliases removed.
+
+const ROLE_USER_IDS: Record<GoalActorRole, string> = {
+  employee: DEFAULT_EMPLOYEE_ID,
+  manager: "22222222-2222-2222-2222-222222222222",
+  admin: "33333333-3333-3333-3333-333333333333",
+};
+
+const toGoalRecord = (row: GoalDbRow): GoalRecord => ({
+  id: row.id,
+  employeeId: row.user_id,
+  title: row.title,
+  description: row.description,
+  thrustArea: row.thrust_area,
+  uom: row.uom,
+  target: row.target,
+  weightage: Number(row.weightage),
+  status: row.status,
+  approvalStatus: row.approval_status,
+  isLocked: row.is_locked,
+  reviewedBy: row.reviewed_by,
+  reviewedAt: row.reviewed_at,
+  reviewNotes: row.review_notes,
+  quarter: row.quarter,
+  measurementType: row.measurement_type,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  submittedAt: row.submitted_at,
+});
+
+const toCheckInRecord = (row: AchievementDbRow): GoalCheckIn => ({
+  id: row.id,
+  goalId: row.goal_id,
+  employeeId: row.employee_id,
+  quarter: row.quarter,
+  actualAchievement: row.actual_value,
+  status: row.status === "completed" ? "Completed" : row.status === "on_track" ? "On Track" : "Not Started",
+  progressPercent: row.progress_percent,
+  notes: row.notes,
+  submittedAt: row.created_at,
+});
+
+const toAuditEntry = (row: AuditDbRow): AuditEntry => ({
+  id: row.id,
+  goalId: row.goal_id ?? "",
+  employeeId: row.employee_id ?? "",
+  action: row.action,
+  actorRole: row.actor_role,
+  actorLabel: row.actor_label,
+  timestamp: row.timestamp,
+  changes: row.changes ?? [],
+});
+
+const getSupabase = () => getSupabaseAdmin();
+
+// Note: Supabase responses are unwrapped at call sites now; helper wrappers removed.
+
+const getCurrentQuarter = (): GoalQuarter => {
+  const month = new Date().getMonth();
+
+  if (month <= 2) return "Q1";
+  if (month <= 5) return "Q2";
+  if (month <= 8) return "Q3";
+  return "Q4";
 };
 
 const normalizeString = (value: FormDataEntryValue | undefined | null): string =>
@@ -188,14 +152,18 @@ const normalizeString = (value: FormDataEntryValue | undefined | null): string =
 const serializeGoalValue = (
   goal: GoalRecord,
   field: keyof GoalRecord,
-): string | number | null => {
+): string | number | boolean | null => {
   const value = goal[field];
 
   if (value === undefined || value === null) {
     return null;
   }
 
-  return typeof value === "string" || typeof value === "number" ? value : null;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  return null;
 };
 
 const collectChanges = (before: GoalRecord, after: GoalRecord): GoalChange[] => {
@@ -289,7 +257,7 @@ const validateEmployeeGoalSet = (goals: GoalRecord[]): string[] => {
 
   for (const goal of goals) {
     if (goal.weightage < MIN_WEIGHTAGE) {
-      errors.push(`Goal \"${goal.title}\" must be at least ${MIN_WEIGHTAGE}% weightage.`);
+      errors.push(`Goal "${goal.title}" must be at least ${MIN_WEIGHTAGE}% weightage.`);
       break;
     }
   }
@@ -312,15 +280,8 @@ const updateGoalRecord = (
   updatedAt: new Date().toISOString(),
 });
 
-const ensureGoalExists = (database: GoalsDatabase, goalId: string): [number, GoalRecord] => {
-  const goalIndex = database.goals.findIndex((goal) => goal.id === goalId);
-
-  if (goalIndex < 0) {
-    throw new Error("Goal not found.");
-  }
-
-  return [goalIndex, database.goals[goalIndex]];
-};
+// `ensureGoalExists` was used in the previous file-backed implementation. Current Supabase-backed
+// flows locate records via queries and throw when missing, so this helper is no longer required.
 
 const buildManagerSummary = (goals: GoalRecord[]): ManagerGoalSummary => {
   const uniqueEmployees = new Set(goals.map((goal) => goal.employeeId));
@@ -343,15 +304,6 @@ const parseNumericValue = (value: string): number | null => {
 const normalizeProgressPercent = (value: number): number => Math.max(0, Math.round(value));
 
 const clampProgressPercent = (value: number): number => Math.min(100, normalizeProgressPercent(value));
-
-const getCurrentQuarter = (): GoalQuarter => {
-  const month = new Date().getMonth();
-
-  if (month <= 2) return "Q1";
-  if (month <= 5) return "Q2";
-  if (month <= 8) return "Q3";
-  return "Q4";
-};
 
 const calculateCheckInResult = (
   goal: GoalRecord,
@@ -479,16 +431,132 @@ const buildCheckInSummary = (quarter: GoalQuarter, records: GoalCheckIn[]): Chec
   notStartedCount: records.filter((record) => record.status === "Not Started").length,
 });
 
+const insertAuditLog = async (entry: Omit<AuditDbRow, "id" | "timestamp"> & { timestamp?: string }) => {
+  const supabase = getSupabase();
+  const payload: AuditDbRow = {
+    id: globalThis.crypto.randomUUID(),
+    goal_id: entry.goal_id,
+    employee_id: entry.employee_id,
+    action: entry.action,
+    performed_by: entry.performed_by,
+    actor_role: entry.actor_role,
+    actor_label: entry.actor_label,
+    timestamp: entry.timestamp ?? new Date().toISOString(),
+    changes: entry.changes,
+  };
+
+  const result = await supabase.from("audit_logs").insert(payload).select("*").single();
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+};
+
+const getGoalsByEmployee = async (employeeId: string): Promise<GoalRecord[]> => {
+  const supabase = getSupabase();
+  const result = await supabase
+    .from("goals")
+    .select("*")
+    .eq("user_id", employeeId)
+    .order("created_at", { ascending: true });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  const rows = result.data ?? [];
+  return rows.map((r) => toGoalRecord(r as GoalDbRow));
+};
+
+const getGoalsByEmployeeAndQuarter = async (employeeId: string, quarter: GoalQuarter): Promise<GoalRecord[]> => {
+  const supabase = getSupabase();
+  const result = await supabase
+    .from("goals")
+    .select("*")
+    .eq("user_id", employeeId)
+    .eq("quarter", quarter)
+    .order("created_at", { ascending: true });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  const rows = result.data ?? [];
+  return rows.map((r) => toGoalRecord(r as GoalDbRow));
+};
+
+const getGoalsByQuarter = async (quarter: GoalQuarter): Promise<GoalRecord[]> => {
+  const supabase = getSupabase();
+  const result = await supabase
+    .from("goals")
+    .select("*")
+    .eq("quarter", quarter)
+    .order("created_at", { ascending: true });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  const rows = result.data ?? [];
+  return rows.map((r) => toGoalRecord(r as GoalDbRow));
+};
+
+const getGoalRowById = async (goalId: string): Promise<GoalRecord> => {
+  const supabase = getSupabase();
+  const result = await supabase
+    .from("goals")
+    .select("*")
+    .eq("id", goalId)
+    .maybeSingle();
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  const row = result.data as GoalDbRow | null;
+
+  if (!row) {
+    throw new Error("Goal not found.");
+  }
+
+  return toGoalRecord(row);
+};
+
+// `getLatestAchievementsByGoalIds` removed — we now query and process achievements inline where needed.
+
+const getCheckInsByEmployeeAndQuarter = async (
+  employeeId: string,
+  quarter: GoalQuarter,
+): Promise<GoalCheckIn[]> => {
+  const supabase = getSupabase();
+  const result = await supabase
+    .from("achievements")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .eq("quarter", quarter)
+    .order("created_at", { ascending: false });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return (result.data ?? []).map((r) => toCheckInRecord(r as AchievementDbRow));
+};
+
 export const getEmployeeGoals = async (employeeId: string): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const goals = database.goals
-    .filter((goal) => goal.employeeId === employeeId)
-    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const supabase = getSupabase();
+  const [goals, auditRows] = await Promise.all([
+    getGoalsByEmployee(employeeId),
+    (async () => {
+      const res = await supabase.from("audit_logs").select("*").eq("employee_id", employeeId).order("timestamp", { ascending: false });
+      if (res.error) throw new Error(res.error.message);
+      return (res.data ?? []) as AuditDbRow[];
+    })(),
+  ]);
 
   return {
     goals,
     summary: buildSummary(goals),
-    auditLog: database.auditLog.filter((entry) => entry.employeeId === employeeId),
+    auditLog: auditRows.map(toAuditEntry),
   };
 };
 
@@ -497,15 +565,14 @@ export const createEmployeeGoal = async (
   goalInput: GoalInput,
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const currentGoals = database.goals.filter((goal) => goal.employeeId === employeeId);
   const validationErrors = validateGoalInput(goalInput);
+  const existingGoals = await getGoalsByEmployeeAndQuarter(employeeId, goalInput.quarter);
 
-  if (currentGoals.length >= GOAL_LIMIT) {
+  if (existingGoals.length >= GOAL_LIMIT) {
     validationErrors.push(`An employee can only have up to ${GOAL_LIMIT} goals.`);
   }
 
-  const nextWeightage = currentGoals.reduce((sum, goal) => sum + goal.weightage, 0) + Number(goalInput.weightage);
+  const nextWeightage = existingGoals.reduce((sum, goal) => sum + goal.weightage, 0) + Number(goalInput.weightage);
 
   if (nextWeightage > 100) {
     validationErrors.push("Saving this goal would push total weightage above 100%.");
@@ -515,42 +582,43 @@ export const createEmployeeGoal = async (
     throw new Error(validationErrors.join(" "));
   }
 
+  const supabase = getSupabase();
   const now = new Date().toISOString();
-  const goal: GoalRecord = {
-    id: randomUUID(),
-    employeeId,
+  const goalPayload = {
+    user_id: employeeId,
     title: goalInput.title.trim(),
     description: goalInput.description.trim(),
-    thrustArea: goalInput.thrustArea.trim(),
+    thrust_area: goalInput.thrustArea.trim(),
     uom: goalInput.uom.trim(),
     target: goalInput.target.trim(),
     weightage: Number(goalInput.weightage),
-    status: "draft",
-    approvalStatus: "not_submitted",
-    isLocked: false,
-    reviewedBy: null,
-    reviewedAt: null,
-    reviewNotes: null,
+    status: "draft" as GoalStatus,
+    approval_status: "not_submitted" as GoalApprovalStatus,
+    is_locked: false,
+    reviewed_by: null,
+    reviewed_at: null,
+    review_notes: null,
     quarter: goalInput.quarter,
-    measurementType: goalInput.measurementType,
-    createdAt: now,
-    updatedAt: now,
-    submittedAt: null,
+    measurement_type: goalInput.measurementType,
+    created_at: now,
+    updated_at: now,
+    submitted_at: null,
   };
 
-  database.goals.push(goal);
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId: goal.id,
-    employeeId,
-    action: "created",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: now,
-    changes: [],
-  });
+  const insertResult = await supabase.from("goals").insert(goalPayload).select("*").single();
+  if (insertResult.error) throw new Error(insertResult.error.message);
+  const insertedGoal = insertResult.data as GoalDbRow;
 
-  await writeDatabase(database);
+  await insertAuditLog({
+    goal_id: insertedGoal.id,
+    employee_id: employeeId,
+    action: "created",
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
+    changes: [],
+    timestamp: now,
+  });
 
   return getEmployeeGoals(employeeId);
 };
@@ -560,22 +628,15 @@ export const updateEmployeeGoal = async (
   goalInput: GoalInput,
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const goalIndex = database.goals.findIndex((goal) => goal.id === goalId);
-
-  if (goalIndex < 0) {
-    throw new Error("Goal not found.");
-  }
-
-  const currentGoal = database.goals[goalIndex];
+  const currentGoal = await getGoalRowById(goalId);
 
   if (currentGoal.status !== "draft" || currentGoal.isLocked) {
     throw new Error("Only draft goals can be edited.");
   }
 
   const validationErrors = validateGoalInput(goalInput);
-  const employeeGoals = database.goals.filter((goal) => goal.employeeId === currentGoal.employeeId && goal.id !== goalId);
-  const nextWeightage = employeeGoals.reduce((sum, goal) => sum + goal.weightage, 0) + Number(goalInput.weightage);
+  const siblingGoals = (await getGoalsByEmployeeAndQuarter(currentGoal.employeeId, goalInput.quarter)).filter((goal) => goal.id !== goalId);
+  const nextWeightage = siblingGoals.reduce((sum, goal) => sum + goal.weightage, 0) + Number(goalInput.weightage);
 
   if (nextWeightage > 100) {
     validationErrors.push("Updating this goal would push total weightage above 100%.");
@@ -585,36 +646,38 @@ export const updateEmployeeGoal = async (
     throw new Error(validationErrors.join(" "));
   }
 
-  const updatedGoal: GoalRecord = {
-    ...currentGoal,
+  const supabase = getSupabase();
+  const updatedAt = new Date().toISOString();
+  const updatedPayload = {
     title: goalInput.title.trim(),
     description: goalInput.description.trim(),
-    thrustArea: goalInput.thrustArea.trim(),
+    thrust_area: goalInput.thrustArea.trim(),
     uom: goalInput.uom.trim(),
     target: goalInput.target.trim(),
     weightage: Number(goalInput.weightage),
-    approvalStatus: "not_submitted",
-    reviewedBy: null,
-    reviewedAt: null,
-    reviewNotes: null,
+    approval_status: "not_submitted" as GoalApprovalStatus,
+    reviewed_by: null,
+    reviewed_at: null,
+    review_notes: null,
     quarter: goalInput.quarter,
-    measurementType: goalInput.measurementType,
-    updatedAt: new Date().toISOString(),
+    measurement_type: goalInput.measurementType,
+    updated_at: updatedAt,
   };
 
-  database.goals[goalIndex] = updatedGoal;
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId,
-    employeeId: currentGoal.employeeId,
-    action: "updated",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: updatedGoal.updatedAt,
-    changes: collectChanges(currentGoal, updatedGoal),
-  });
+  const updateResult = await supabase.from("goals").update(updatedPayload).eq("id", goalId).select("*").single();
+  if (updateResult.error) throw new Error(updateResult.error.message);
+  const updatedGoal = toGoalRecord(updateResult.data as GoalDbRow);
 
-  await writeDatabase(database);
+  await insertAuditLog({
+    goal_id: goalId,
+    employee_id: currentGoal.employeeId,
+    action: "updated",
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
+    changes: collectChanges(currentGoal, updatedGoal),
+    timestamp: updatedAt,
+  });
 
   return getEmployeeGoals(currentGoal.employeeId);
 };
@@ -623,42 +686,38 @@ export const deleteEmployeeGoal = async (
   goalId: string,
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const goalIndex = database.goals.findIndex((goal) => goal.id === goalId);
+  const currentGoal = await getGoalRowById(goalId);
 
-  if (goalIndex < 0) {
-    throw new Error("Goal not found.");
-  }
-
-  const goal = database.goals[goalIndex];
-
-  if (goal.status !== "draft" || goal.isLocked) {
+  if (currentGoal.status !== "draft" || currentGoal.isLocked) {
     throw new Error("Only draft goals can be deleted.");
   }
 
-  database.goals.splice(goalIndex, 1);
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId,
-    employeeId: goal.employeeId,
+  const supabase = getSupabase();
+  const deleteResult = await supabase.from("goals").delete().eq("id", goalId).select("id").single();
+  if (deleteResult.error) {
+    throw new Error(deleteResult.error.message);
+  }
+
+  await insertAuditLog({
+    goal_id: goalId,
+    employee_id: currentGoal.employeeId,
     action: "deleted",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: new Date().toISOString(),
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
     changes: [],
+    timestamp: new Date().toISOString(),
   });
 
-  await writeDatabase(database);
-
-  return getEmployeeGoals(goal.employeeId);
+  return getEmployeeGoals(currentGoal.employeeId);
 };
 
 export const submitEmployeeGoals = async (
   employeeId: string,
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const goals = database.goals.filter((goal) => goal.employeeId === employeeId);
+  const currentQuarter = getCurrentQuarter();
+  const goals = await getGoalsByEmployeeAndQuarter(employeeId, currentQuarter);
   const validationErrors = validateEmployeeGoalSet(goals);
 
   if (goals.length === 0) {
@@ -674,44 +733,60 @@ export const submitEmployeeGoals = async (
   }
 
   const timestamp = new Date().toISOString();
+  const supabase = getSupabase();
 
-  database.goals = database.goals.map((goal) =>
-    goal.employeeId === employeeId
-      ? {
-          ...goal,
-          status: "submitted",
-          approvalStatus: "pending",
-          isLocked: false,
-          updatedAt: timestamp,
-          submittedAt: timestamp,
-        }
-      : goal,
-  );
+  const updateResult = await supabase
+    .from("goals")
+    .update({
+      status: "submitted" as GoalStatus,
+      approval_status: "pending" as GoalApprovalStatus,
+      is_locked: false,
+      updated_at: timestamp,
+      submitted_at: timestamp,
+    })
+    .eq("user_id", employeeId)
+    .eq("quarter", currentQuarter)
+    .select("*");
 
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId: employeeId,
-    employeeId,
+  if (updateResult.error) {
+    throw new Error(updateResult.error.message);
+  }
+
+  await insertAuditLog({
+    goal_id: null,
+    employee_id: employeeId,
     action: "submitted",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp,
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
     changes: [],
+    timestamp,
   });
-
-  await writeDatabase(database);
 
   return getEmployeeGoals(employeeId);
 };
 
 export const getManagerGoals = async (): Promise<{ goals: GoalRecord[]; summary: ManagerGoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const goals = [...database.goals].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  const supabase = getSupabase();
+  const [goalRows, auditRows] = await Promise.all([
+    (async () => {
+      const res = await supabase.from("goals").select("*").order("updated_at", { ascending: false });
+      if (res.error) throw new Error(res.error.message);
+      return (res.data ?? []) as GoalDbRow[];
+    })(),
+    (async () => {
+      const res = await supabase.from("audit_logs").select("*").order("timestamp", { ascending: false });
+      if (res.error) throw new Error(res.error.message);
+      return (res.data ?? []) as AuditDbRow[];
+    })(),
+  ]);
+
+  const goals = goalRows.map(toGoalRecord);
 
   return {
     goals,
     summary: buildManagerSummary(goals),
-    auditLog: database.auditLog,
+    auditLog: auditRows.map(toAuditEntry),
   };
 };
 
@@ -720,8 +795,7 @@ export const updateManagerGoal = async (
   patch: { target?: string; weightage?: number | string; reviewNotes?: string },
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: ManagerGoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const [goalIndex, currentGoal] = ensureGoalExists(database, goalId);
+  const currentGoal = await getGoalRowById(goalId);
 
   if (currentGoal.approvalStatus !== "pending" || currentGoal.isLocked) {
     throw new Error("Only pending goals can be edited by a manager.");
@@ -744,19 +818,33 @@ export const updateManagerGoal = async (
     reviewNotes: typeof patch.reviewNotes === "string" ? patch.reviewNotes.trim() || null : currentGoal.reviewNotes,
   });
 
-  database.goals[goalIndex] = updatedGoal;
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId,
-    employeeId: currentGoal.employeeId,
-    action: "updated",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: updatedGoal.updatedAt,
-    changes: collectChanges(currentGoal, updatedGoal),
-  });
+  const supabase = getSupabase();
+  const timestamp = updatedGoal.updatedAt;
+  const updateResult = await supabase
+    .from("goals")
+    .update({
+      target: updatedGoal.target,
+      weightage: updatedGoal.weightage,
+      review_notes: updatedGoal.reviewNotes,
+      updated_at: timestamp,
+    })
+    .eq("id", goalId)
+    .select("*")
+    .single();
 
-  await writeDatabase(database);
+  if (updateResult.error) throw new Error(updateResult.error.message);
+  const after = toGoalRecord(updateResult.data as GoalDbRow);
+
+  await insertAuditLog({
+    goal_id: goalId,
+    employee_id: currentGoal.employeeId,
+    action: "updated",
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
+    timestamp,
+    changes: collectChanges(currentGoal, after),
+  });
 
   return getManagerGoals();
 };
@@ -765,41 +853,48 @@ const approveGoalRecord = async (
   goalId: string,
   actor: MutationActor,
 ): Promise<{ goals: GoalRecord[]; summary: ManagerGoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const [goalIndex, currentGoal] = ensureGoalExists(database, goalId);
+  const currentGoal = await getGoalRowById(goalId);
 
   if (currentGoal.approvalStatus !== "pending") {
     throw new Error("Only pending goals can be approved.");
   }
 
-  const employeeGoals = database.goals.filter((goal) => goal.employeeId === currentGoal.employeeId && goal.id !== goalId);
+  const employeeGoals = (await getGoalsByEmployeeAndQuarter(currentGoal.employeeId, currentGoal.quarter)).filter((goal) => goal.id !== goalId);
   const totalWeightage = employeeGoals.reduce((sum, goal) => sum + goal.weightage, 0) + currentGoal.weightage;
 
   if (totalWeightage !== 100) {
     throw new Error("Approve after the employee goal set totals 100%.");
   }
 
-  const updatedGoal = updateGoalRecord(currentGoal, {
-    approvalStatus: "approved",
-    isLocked: true,
-    reviewedBy: actor.label,
-    reviewedAt: new Date().toISOString(),
-    reviewNotes: currentGoal.reviewNotes,
-  });
+  const supabase = getSupabase();
+  const updatedAt = new Date().toISOString();
+  const updateResult = await supabase
+    .from("goals")
+    .update({
+      status: "locked" as GoalStatus,
+      approval_status: "approved" as GoalApprovalStatus,
+      is_locked: true,
+      reviewed_by: actor.label,
+      reviewed_at: updatedAt,
+      updated_at: updatedAt,
+    })
+    .eq("id", goalId)
+    .select("*")
+    .single();
 
-  database.goals[goalIndex] = updatedGoal;
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId,
-    employeeId: currentGoal.employeeId,
+  if (updateResult.error) throw new Error(updateResult.error.message);
+  const updatedGoal = toGoalRecord(updateResult.data as GoalDbRow);
+
+  await insertAuditLog({
+    goal_id: goalId,
+    employee_id: currentGoal.employeeId,
     action: "updated",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: updatedGoal.updatedAt,
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
+    timestamp: updatedAt,
     changes: collectChanges(currentGoal, updatedGoal),
   });
-
-  await writeDatabase(database);
 
   return getManagerGoals();
 };
@@ -809,36 +904,43 @@ const rejectGoalRecord = async (
   actor: MutationActor,
   notes: string,
 ): Promise<{ goals: GoalRecord[]; summary: ManagerGoalSummary; auditLog: AuditEntry[] }> => {
-  const database = await readDatabase();
-  const [goalIndex, currentGoal] = ensureGoalExists(database, goalId);
+  const currentGoal = await getGoalRowById(goalId);
 
   if (currentGoal.approvalStatus !== "pending") {
     throw new Error("Only pending goals can be rejected.");
   }
 
-  const updatedGoal = updateGoalRecord(currentGoal, {
-    status: "draft",
-    approvalStatus: "rejected",
-    isLocked: false,
-    reviewedBy: actor.label,
-    reviewedAt: new Date().toISOString(),
-    reviewNotes: notes.trim() || "Rejected by manager",
-    submittedAt: null,
-  });
+  const supabase = getSupabase();
+  const updatedAt = new Date().toISOString();
+  const updateResult = await supabase
+    .from("goals")
+    .update({
+      status: "draft" as GoalStatus,
+      approval_status: "rejected" as GoalApprovalStatus,
+      is_locked: false,
+      reviewed_by: actor.label,
+      reviewed_at: updatedAt,
+      review_notes: notes.trim() || "Rejected by manager",
+      submitted_at: null,
+      updated_at: updatedAt,
+    })
+    .eq("id", goalId)
+    .select("*")
+    .single();
 
-  database.goals[goalIndex] = updatedGoal;
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId,
-    employeeId: currentGoal.employeeId,
+  if (updateResult.error) throw new Error(updateResult.error.message);
+  const updatedGoal = toGoalRecord(updateResult.data as GoalDbRow);
+
+  await insertAuditLog({
+    goal_id: goalId,
+    employee_id: currentGoal.employeeId,
     action: "updated",
-    actorRole: actor.role,
-    actorLabel: actor.label,
-    timestamp: updatedGoal.updatedAt,
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
+    timestamp: updatedAt,
     changes: collectChanges(currentGoal, updatedGoal),
   });
-
-  await writeDatabase(database);
 
   return getManagerGoals();
 };
@@ -847,11 +949,7 @@ export const managerApproveGoal = approveGoalRecord;
 
 export const managerRejectGoal = rejectGoalRecord;
 
-export const getManagerGoalById = async (goalId: string): Promise<GoalRecord> => {
-  const database = await readDatabase();
-  const [, goal] = ensureGoalExists(database, goalId);
-  return goal;
-};
+export const getManagerGoalById = async (goalId: string): Promise<GoalRecord> => getGoalRowById(goalId);
 
 export const getCurrentGoalQuarter = (): GoalQuarter => getCurrentQuarter();
 
@@ -864,13 +962,8 @@ export const getEmployeeCheckIns = async (
   checkIns: GoalCheckIn[];
   summary: CheckInSummary;
 }> => {
-  const database = await readDatabase();
-  const goals = database.goals
-    .filter((goal) => goal.employeeId === employeeId && goal.approvalStatus === "approved")
-    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  const checkIns = database.checkIns
-    .filter((checkIn) => checkIn.employeeId === employeeId && checkIn.quarter === quarter)
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+  const goals = (await getGoalsByEmployeeAndQuarter(employeeId, quarter)).filter((goal) => goal.approvalStatus === "approved" && goal.isLocked);
+  const checkIns = await getCheckInsByEmployeeAndQuarter(employeeId, quarter);
 
   return {
     quarter,
@@ -884,13 +977,8 @@ export const getEmployeeProgress = async (
   employeeId: string,
   quarter: GoalQuarter = getCurrentQuarter(),
 ): Promise<ProgressDashboard> => {
-  const database = await readDatabase();
-  const goals = database.goals
-    .filter((goal) => goal.employeeId === employeeId && goal.approvalStatus === "approved" && goal.quarter === quarter)
-    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  const checkIns = database.checkIns
-    .filter((checkIn) => checkIn.employeeId === employeeId && checkIn.quarter === quarter)
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+  const goals = (await getGoalsByEmployeeAndQuarter(employeeId, quarter)).filter((goal) => goal.approvalStatus === "approved" && goal.isLocked);
+  const checkIns = await getCheckInsByEmployeeAndQuarter(employeeId, quarter);
 
   return buildProgressDashboard(quarter, "employee", goals, checkIns);
 };
@@ -898,15 +986,20 @@ export const getEmployeeProgress = async (
 export const getCompanyProgress = async (
   quarter: GoalQuarter = getCurrentQuarter(),
 ): Promise<ProgressDashboard> => {
-  const database = await readDatabase();
-  const goals = database.goals
-    .filter((goal) => goal.approvalStatus === "approved" && goal.quarter === quarter)
-    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  const checkIns = database.checkIns
-    .filter((checkIn) => checkIn.quarter === quarter)
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+  const goals = (await getGoalsByQuarter(quarter)).filter((goal) => goal.approvalStatus === "approved" && goal.isLocked);
+  const supabase = getSupabase();
+  const achievementsRes = await supabase
+    .from("achievements")
+    .select("*")
+    .eq("quarter", quarter)
+    .order("created_at", { ascending: false });
 
-  return buildProgressDashboard(quarter, "company", goals, checkIns);
+  if (achievementsRes.error) throw new Error(achievementsRes.error.message);
+
+  const checkIns = (achievementsRes.data ?? []).map((r) => toCheckInRecord(r as AchievementDbRow));
+
+  const goalIds = new Set(goals.map((goal) => goal.id));
+  return buildProgressDashboard(quarter, "company", goals, checkIns.filter((checkIn) => goalIds.has(checkIn.goalId)));
 };
 
 export const submitEmployeeCheckIn = async (
@@ -924,8 +1017,7 @@ export const submitEmployeeCheckIn = async (
   checkIns: GoalCheckIn[];
   summary: CheckInSummary;
 }> => {
-  const database = await readDatabase();
-  const [goalIndex, goal] = ensureGoalExists(database, input.goalId);
+  const goal = await getGoalRowById(input.goalId);
 
   if (goal.employeeId !== input.employeeId) {
     throw new Error("You can only submit check-ins for your own goals.");
@@ -946,63 +1038,81 @@ export const submitEmployeeCheckIn = async (
   }
 
   const result = calculateCheckInResult(goal, trimmedAchievement);
-  const existingIndex = database.checkIns.findIndex(
-    (checkIn) => checkIn.goalId === goal.id && checkIn.employeeId === goal.employeeId && checkIn.quarter === input.quarter,
-  );
+  const supabase = getSupabase();
   const now = new Date().toISOString();
-  const nextCheckIn: GoalCheckIn = {
-    id: existingIndex >= 0 ? database.checkIns[existingIndex].id : randomUUID(),
-    goalId: goal.id,
-    employeeId: goal.employeeId,
-    quarter: input.quarter,
-    actualAchievement: trimmedAchievement,
-    status: result.status,
-    progressPercent: result.progressPercent,
-    notes: input.notes?.trim() ? input.notes.trim() : null,
-    submittedAt: now,
-  };
 
-  if (existingIndex >= 0) {
-    database.checkIns[existingIndex] = nextCheckIn;
-  } else {
-    database.checkIns.unshift(nextCheckIn);
+  const existingResult = await supabase
+    .from("achievements")
+    .select("*")
+    .eq("goal_id", goal.id)
+    .eq("employee_id", goal.employeeId)
+    .eq("quarter", input.quarter)
+    .maybeSingle();
+
+  if (existingResult.error) {
+    throw new Error(existingResult.error.message);
   }
 
-  database.auditLog.unshift({
-    id: randomUUID(),
-    goalId: goal.id,
-    employeeId: goal.employeeId,
-    action: existingIndex >= 0 ? "updated" : "created",
-    actorRole: actor.role,
-    actorLabel: actor.label,
+  const existing = existingResult.data as AchievementDbRow | null;
+  const achievementPayload = {
+    id: existing?.id ?? globalThis.crypto.randomUUID(),
+    goal_id: goal.id,
+    employee_id: goal.employeeId,
+    actual_value: trimmedAchievement,
+    status: result.status === "Completed" ? "completed" : result.status === "On Track" ? "on_track" : "not_started",
+    quarter: input.quarter,
+    notes: input.notes?.trim() ? input.notes.trim() : null,
+    progress_percent: result.progressPercent,
+    created_at: existing?.created_at ?? now,
+    updated_at: now,
+  };
+
+  const upsertResult = await supabase
+    .from("achievements")
+    .upsert(achievementPayload, { onConflict: "goal_id,quarter" })
+    .select("*")
+    .single();
+
+  if (upsertResult.error) throw new Error(upsertResult.error.message);
+  const achievementRow = upsertResult.data as AchievementDbRow;
+  const nextCheckIn = toCheckInRecord(achievementRow);
+
+  await insertAuditLog({
+    goal_id: goal.id,
+    employee_id: goal.employeeId,
+    action: existing ? "updated" : "created",
+    performed_by: ROLE_USER_IDS[actor.role],
+    actor_role: actor.role,
+    actor_label: actor.label,
     timestamp: now,
     changes: [
       {
         field: "status",
-        before: existingIndex >= 0 ? database.checkIns[existingIndex].status : null,
+        before: existing ? existing.status : null,
         after: nextCheckIn.status,
       },
     ],
   });
 
-  database.goals[goalIndex] = updateGoalRecord(goal, {
-    updatedAt: now,
-  });
+  const updatedGoalResult = await supabase
+    .from("goals")
+    .update({ updated_at: now })
+    .eq("id", goal.id)
+    .select("*")
+    .single();
 
-  await writeDatabase(database);
+  if (updatedGoalResult.error) {
+    throw new Error(updatedGoalResult.error.message);
+  }
+
+  const quarterGoals = (await getGoalsByEmployeeAndQuarter(input.employeeId, input.quarter)).filter((entry) => entry.approvalStatus === "approved" && entry.isLocked);
+  const quarterCheckIns = await getCheckInsByEmployeeAndQuarter(input.employeeId, input.quarter);
 
   return {
     quarter: input.quarter,
-    goals: database.goals
-      .filter((entry) => entry.employeeId === input.employeeId && entry.approvalStatus === "approved")
-      .sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
-    checkIns: database.checkIns
-      .filter((checkIn) => checkIn.employeeId === input.employeeId && checkIn.quarter === input.quarter)
-      .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt)),
-    summary: buildCheckInSummary(
-      input.quarter,
-      database.checkIns.filter((checkIn) => checkIn.employeeId === input.employeeId && checkIn.quarter === input.quarter),
-    ),
+    goals: quarterGoals,
+    checkIns: quarterCheckIns,
+    summary: buildCheckInSummary(input.quarter, quarterCheckIns),
   };
 };
 
@@ -1020,20 +1130,26 @@ export const parseGoalInput = (body: Record<string, unknown>): GoalInput => ({
 export const getDefaultEmployeeId = (): string => DEFAULT_EMPLOYEE_ID;
 
 export const getAuditReport = async (limit = 25): Promise<AuditReport> => {
-  const database = await readDatabase();
-  const entries = database.auditLog.slice(0, limit);
+  const supabase = getSupabase();
+  const entriesRes = await supabase.from("audit_logs").select("*").order("timestamp", { ascending: false }).limit(limit);
+  if (entriesRes.error) throw new Error(entriesRes.error.message);
+  const entries = (entriesRes.data ?? []) as AuditDbRow[];
+
+  const allRes = await supabase.from("audit_logs").select("*").order("timestamp", { ascending: false });
+  if (allRes.error) throw new Error(allRes.error.message);
+  const allEntries = (allRes.data ?? []) as AuditDbRow[];
 
   const summary: AuditReportSummary = {
-    totalEntries: database.auditLog.length,
-    createdCount: database.auditLog.filter((entry) => entry.action === "created").length,
-    updatedCount: database.auditLog.filter((entry) => entry.action === "updated").length,
-    deletedCount: database.auditLog.filter((entry) => entry.action === "deleted").length,
-    submittedCount: database.auditLog.filter((entry) => entry.action === "submitted").length,
-    employeeCount: new Set(database.auditLog.map((entry) => entry.employeeId)).size,
-    actorCount: new Set(database.auditLog.map((entry) => `${entry.actorRole}:${entry.actorLabel}`)).size,
+    totalEntries: allEntries.length,
+    createdCount: allEntries.filter((entry) => entry.action === "created").length,
+    updatedCount: allEntries.filter((entry) => entry.action === "updated").length,
+    deletedCount: allEntries.filter((entry) => entry.action === "deleted").length,
+    submittedCount: allEntries.filter((entry) => entry.action === "submitted").length,
+    employeeCount: new Set(allEntries.map((entry) => entry.employee_id ?? "")).size,
+    actorCount: new Set(allEntries.map((entry) => `${entry.actor_role}:${entry.actor_label}`)).size,
   };
 
-  return { entries, summary };
+  return { entries: entries.map(toAuditEntry), summary };
 };
 
 export const createActor = (role: GoalActorRole, label: string): MutationActor => ({

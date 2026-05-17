@@ -1,4 +1,4 @@
-export const DEFAULT_EMPLOYEE_ID = "employee-demo";
+export const DEFAULT_EMPLOYEE_ID = "11111111-1111-1111-1111-111111111111";
 export const GOAL_LIMIT = 8;
 export const MIN_WEIGHTAGE = 10;
 
@@ -8,7 +8,7 @@ export type GoalQuarter = (typeof QUARTERS)[number];
 export const MEASUREMENT_TYPES = ["MIN", "MAX", "ZERO", "TIMELINE"] as const;
 export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
 
-export const GOAL_STATUSES = ["draft", "submitted"] as const;
+export const GOAL_STATUSES = ["draft", "submitted", "approved", "locked"] as const;
 export type GoalStatus = (typeof GOAL_STATUSES)[number];
 
 export const APPROVAL_STATUSES = [
@@ -139,8 +139,8 @@ export interface ManagerGoalSummary {
 
 export interface GoalChange {
   field: keyof GoalRecord;
-  before: string | number | null;
-  after: string | number | null;
+  before: string | number | boolean | null;
+  after: string | number | boolean | null;
 }
 
 export interface AuditEntry {
