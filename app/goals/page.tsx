@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 
 export default function GoalsPage() {
 
@@ -85,6 +85,25 @@ export default function GoalsPage() {
 
     setGoals(updatedGoals);
   };
+
+  useEffect(() => {
+
+  const savedGoals = localStorage.getItem("goals");
+
+  if (savedGoals) {
+    setGoals(JSON.parse(savedGoals));
+  }
+
+}, []);
+
+useEffect(() => {
+
+  localStorage.setItem(
+    "goals",
+    JSON.stringify(goals)
+  );
+
+}, [goals]);
 
   return (
     <main className="min-h-screen bg-black text-white flex">
