@@ -23,6 +23,19 @@ export const CHECKIN_STATUSES = ["Not Started", "On Track", "Completed"] as cons
 export type CheckInStatus = (typeof CHECKIN_STATUSES)[number];
 
 export type GoalActorRole = "employee" | "manager" | "admin";
+export type AppRole = GoalActorRole;
+
+export const ROLE_HOME: Record<AppRole, string> = {
+  employee: "/employee",
+  manager: "/manager",
+  admin: "/admin",
+};
+
+export interface AuthSession {
+  email: string;
+  role: AppRole;
+  label: string;
+}
 
 export interface GoalRecord {
   id: string;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { logout } from "@/lib/auth-client";
 
 export default function Sidebar() {
 
@@ -55,12 +56,9 @@ export default function Sidebar() {
 </nav>
 
       <button
-        onClick={() => {
-
-          localStorage.removeItem("role");
-
+        onClick={async () => {
+          await logout();
           router.push("/login");
-
         }}
         className="mt-auto bg-red-500 hover:bg-red-600 transition px-5 py-3 rounded-xl font-semibold"
       >

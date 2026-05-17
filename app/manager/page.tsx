@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchSession } from "@/lib/auth-client";
 import { type GoalRecord, type ManagerGoalSummary } from "@/lib/goal-types";
 
 type ManagerDraft = {
@@ -22,11 +23,21 @@ export default function ManagerPage() {
   const [drafts, setDrafts] = useState<Record<string, ManagerDraft>>({});
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
+    let active = true;
 
-    if (role !== "manager") {
-      router.push("/login");
-    }
+    const guard = async () => {
+      const session = await fetchSession();
+
+      if (active && session?.role !== "manager") {
+        router.push("/login");
+      }
+    };
+
+    void guard();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   const loadGoals = async () => {

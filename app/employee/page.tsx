@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
+import { fetchSession } from "@/lib/auth-client";
 import {
   DEFAULT_EMPLOYEE_ID,
   QUARTERS,
@@ -29,11 +30,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
+    let active = true;
 
-    if (role !== "employee") {
-      router.push("/login");
-    }
+    const guard = async () => {
+      const session = await fetchSession();
+
+      if (active && session?.role !== "employee") {
+        router.push("/login");
+      }
+    };
+
+    void guard();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   useEffect(() => {

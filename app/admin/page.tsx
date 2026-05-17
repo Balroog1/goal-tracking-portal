@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { fetchSession } from "@/lib/auth-client";
 import {
   QUARTERS,
   type GoalProgressRecord,
@@ -27,11 +28,21 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
+    let active = true;
 
-    if (role !== "admin") {
-      router.push("/login");
-    }
+    const guard = async () => {
+      const session = await fetchSession();
+
+      if (active && session?.role !== "admin") {
+        router.push("/login");
+      }
+    };
+
+    void guard();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   useEffect(() => {

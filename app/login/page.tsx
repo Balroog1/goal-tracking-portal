@@ -1,121 +1,97 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchSession, loginWithDemoAccount } from "@/lib/auth-client";
+import { ROLE_HOME, type AppRole } from "@/lib/goal-types";
+
 export default function LoginPage() {
-
   const router = useRouter();
-  useEffect(() => {
-
-  const role = localStorage.getItem("role");
-
-  if (role === "employee") {
-
-    router.push("/employee");
-
-  }
-
-  else if (role === "manager") {
-
-    router.push("/manager");
-
-  }
-
-  else if (role === "admin") {
-
-    router.push("/admin");
-
-  }
-
-}, [router]);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: FormEvent) => {
+  useEffect(() => {
+    let active = true;
 
-    e.preventDefault();
+    const restoreSession = async () => {
+      const session = await fetchSession();
 
-    if (email === "employee@demo.com") {
+      if (active && session) {
+        router.push(ROLE_HOME[session.role as AppRole]);
+      }
+    };
 
-      localStorage.setItem("role", "employee");
+    void restoreSession();
 
-      router.push("/employee");
-    }
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
-    else if (email === "manager@demo.com") {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
 
-      localStorage.setItem("role", "manager");
-
-      router.push("/manager");
-    }
-
-    else if (email === "admin@demo.com") {
-
-      localStorage.setItem("role", "admin");
-
-      router.push("/admin");
-    }
-
-    else {
-
-      alert("Invalid Demo Account");
-
+    try {
+      const result = await loginWithDemoAccount(email, password);
+      router.push(result.redirectTo);
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "Unable to login.");
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-
-      <div className="w-full max-w-md bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl p-8">
-
-        <h1 className="text-4xl font-bold mb-2 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
+        <h1 className="mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-center text-4xl font-bold text-transparent">
           Welcome Back
         </h1>
+        <p className="mb-8 text-center text-gray-400">Login to your Goal Tracking Portal</p>
 
-        <p className="text-gray-400 text-center mb-8">
-          Login to your Goal Tracking Portal
-        </p>
+        {error ? (
+          <div className="mb-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        ) : null}
 
         <form onSubmit={handleLogin} className="space-y-5">
-
           <div>
-            <label className="block mb-2 text-sm text-gray-300">
-              Email
-            </label>
-
+            <label className="mb-2 block text-sm text-gray-300">Email</label>
             <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="employee@company.com"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="employee@demo.com"
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block mb-2 text-sm text-gray-300">
-              Password
-            </label>
-
+            <label className="mb-2 block text-sm text-gray-300">Password</label>
             <input
-                 type="password"
-                 value={password}
-                 onChange={(e) => setPassword(e.target.value)}
-                 placeholder="••••••••"
-                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-purple-500"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Demo password"
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-purple-500"
             />
           </div>
 
           <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 transition rounded-xl py-3 font-semibold"
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 py-3 font-semibold transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Login
+            {loading ? "Signing in..." : "Login"}
           </button>
-
         </form>
 
-        <div className="mt-8 text-sm text-gray-400 text-center">
+        <div className="mt-8 text-center text-sm text-gray-400">
           Demo Accounts:
           <br />
           employee@demo.com
@@ -124,9 +100,7 @@ export default function LoginPage() {
           <br />
           admin@demo.com
         </div>
-
       </div>
-
     </main>
   );
 }
