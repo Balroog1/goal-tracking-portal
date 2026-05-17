@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import Topbar from "@/components/Topbar";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -32,6 +33,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <section className="flex-1 p-8">
+        <Topbar />
 
         {/* Top Bar */}
         <div className="flex items-center gap-4">
