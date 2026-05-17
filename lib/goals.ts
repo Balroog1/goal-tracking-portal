@@ -9,6 +9,8 @@ import {
   MEASUREMENT_TYPES,
   QUARTERS,
   type AuditEntry,
+  type CheckInSummary,
+  type GoalCheckIn,
   type GoalActorRole,
   type GoalChange,
   type GoalInput,
@@ -21,6 +23,7 @@ import {
 
 interface GoalsDatabase {
   goals: GoalRecord[];
+  checkIns: GoalCheckIn[];
   auditLog: AuditEntry[];
 }
 
@@ -125,6 +128,7 @@ const defaultDatabase = (): GoalsDatabase => {
         submittedAt: null,
       },
     ],
+    checkIns: [],
     auditLog: [],
   };
 };
@@ -136,7 +140,7 @@ const ensureDatabase = async (): Promise<void> => {
     const raw = await readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw) as Partial<GoalsDatabase>;
 
-    if (!Array.isArray(parsed.goals) || parsed.goals.length === 0) {
+    if (!Array.isArray(parsed.goals) || parsed.goals.length === 0 || !Array.isArray(parsed.checkIns)) {
       await writeFile(DATA_FILE, `${JSON.stringify(defaultDatabase(), null, 2)}\n`, {
         encoding: "utf8",
       });
@@ -157,6 +161,7 @@ const readDatabase = async (): Promise<GoalsDatabase> => {
 
     return {
       goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+      checkIns: Array.isArray(parsed.checkIns) ? parsed.checkIns : [],
       auditLog: Array.isArray(parsed.auditLog) ? parsed.auditLog : [],
     };
   } catch {
@@ -323,6 +328,78 @@ const buildManagerSummary = (goals: GoalRecord[]): ManagerGoalSummary => {
     totalEmployees: uniqueEmployees.size,
   };
 };
+
+const parseNumericValue = (value: string): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getCurrentQuarter = (): GoalQuarter => {
+  const month = new Date().getMonth();
+
+  if (month <= 2) return "Q1";
+  if (month <= 5) return "Q2";
+  if (month <= 8) return "Q3";
+  return "Q4";
+};
+
+const calculateCheckInResult = (
+  goal: GoalRecord,
+  actualAchievement: string,
+): Pick<GoalCheckIn, "status" | "progressPercent"> => {
+  const trimmedActual = actualAchievement.trim();
+
+  if (!trimmedActual) {
+    return { status: "Not Started", progressPercent: 0 };
+  }
+
+  if (goal.measurementType === "TIMELINE") {
+    const targetDate = new Date(goal.target);
+    const actualDate = new Date(trimmedActual);
+
+    if (Number.isNaN(targetDate.getTime()) || Number.isNaN(actualDate.getTime())) {
+      return { status: "On Track", progressPercent: 50 };
+    }
+
+    return actualDate.getTime() <= targetDate.getTime()
+      ? { status: "Completed", progressPercent: 100 }
+      : { status: "On Track", progressPercent: 50 };
+  }
+
+  const targetNumber = parseNumericValue(goal.target);
+  const actualNumber = parseNumericValue(trimmedActual);
+
+  if (goal.measurementType === "ZERO") {
+    if (actualNumber === null) {
+      return { status: "Not Started", progressPercent: 0 };
+    }
+
+    return actualNumber === 0
+      ? { status: "Completed", progressPercent: 100 }
+      : { status: "On Track", progressPercent: 0 };
+  }
+
+  if (targetNumber === null || targetNumber <= 0 || actualNumber === null || actualNumber < 0) {
+    return { status: "On Track", progressPercent: 0 };
+  }
+
+  const progressPercent = goal.measurementType === "MIN"
+    ? Math.round((actualNumber / targetNumber) * 100)
+    : Math.round((targetNumber / Math.max(actualNumber, 1)) * 100);
+
+  return progressPercent >= 100
+    ? { status: "Completed", progressPercent }
+    : { status: "On Track", progressPercent };
+};
+
+const buildCheckInSummary = (quarter: GoalQuarter, records: GoalCheckIn[]): CheckInSummary => ({
+  quarter,
+  totalGoals: records.length,
+  submittedCheckIns: records.length,
+  completedCount: records.filter((record) => record.status === "Completed").length,
+  onTrackCount: records.filter((record) => record.status === "On Track").length,
+  notStartedCount: records.filter((record) => record.status === "Not Started").length,
+});
 
 export const getEmployeeGoals = async (employeeId: string): Promise<{ goals: GoalRecord[]; summary: GoalSummary; auditLog: AuditEntry[] }> => {
   const database = await readDatabase();
@@ -696,6 +773,130 @@ export const getManagerGoalById = async (goalId: string): Promise<GoalRecord> =>
   const database = await readDatabase();
   const [, goal] = ensureGoalExists(database, goalId);
   return goal;
+};
+
+export const getCurrentGoalQuarter = (): GoalQuarter => getCurrentQuarter();
+
+export const getEmployeeCheckIns = async (
+  employeeId: string,
+  quarter: GoalQuarter = getCurrentQuarter(),
+): Promise<{
+  quarter: GoalQuarter;
+  goals: GoalRecord[];
+  checkIns: GoalCheckIn[];
+  summary: CheckInSummary;
+}> => {
+  const database = await readDatabase();
+  const goals = database.goals
+    .filter((goal) => goal.employeeId === employeeId && goal.approvalStatus === "approved")
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const checkIns = database.checkIns
+    .filter((checkIn) => checkIn.employeeId === employeeId && checkIn.quarter === quarter)
+    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+
+  return {
+    quarter,
+    goals,
+    checkIns,
+    summary: buildCheckInSummary(quarter, checkIns),
+  };
+};
+
+export const submitEmployeeCheckIn = async (
+  input: {
+    goalId: string;
+    employeeId: string;
+    quarter: GoalQuarter;
+    actualAchievement: string;
+    notes?: string;
+  },
+  actor: MutationActor,
+): Promise<{
+  quarter: GoalQuarter;
+  goals: GoalRecord[];
+  checkIns: GoalCheckIn[];
+  summary: CheckInSummary;
+}> => {
+  const database = await readDatabase();
+  const [goalIndex, goal] = ensureGoalExists(database, input.goalId);
+
+  if (goal.employeeId !== input.employeeId) {
+    throw new Error("You can only submit check-ins for your own goals.");
+  }
+
+  if (goal.approvalStatus !== "approved" || !goal.isLocked) {
+    throw new Error("Only approved and locked goals can receive quarterly check-ins.");
+  }
+
+  if (!QUARTERS.includes(input.quarter)) {
+    throw new Error("Select a valid quarter.");
+  }
+
+  const trimmedAchievement = input.actualAchievement.trim();
+
+  if (!trimmedAchievement) {
+    throw new Error("Actual achievement is required.");
+  }
+
+  const result = calculateCheckInResult(goal, trimmedAchievement);
+  const existingIndex = database.checkIns.findIndex(
+    (checkIn) => checkIn.goalId === goal.id && checkIn.employeeId === goal.employeeId && checkIn.quarter === input.quarter,
+  );
+  const now = new Date().toISOString();
+  const nextCheckIn: GoalCheckIn = {
+    id: existingIndex >= 0 ? database.checkIns[existingIndex].id : randomUUID(),
+    goalId: goal.id,
+    employeeId: goal.employeeId,
+    quarter: input.quarter,
+    actualAchievement: trimmedAchievement,
+    status: result.status,
+    progressPercent: result.progressPercent,
+    notes: input.notes?.trim() ? input.notes.trim() : null,
+    submittedAt: now,
+  };
+
+  if (existingIndex >= 0) {
+    database.checkIns[existingIndex] = nextCheckIn;
+  } else {
+    database.checkIns.unshift(nextCheckIn);
+  }
+
+  database.auditLog.unshift({
+    id: randomUUID(),
+    goalId: goal.id,
+    employeeId: goal.employeeId,
+    action: existingIndex >= 0 ? "updated" : "created",
+    actorRole: actor.role,
+    actorLabel: actor.label,
+    timestamp: now,
+    changes: [
+      {
+        field: "status",
+        before: existingIndex >= 0 ? database.checkIns[existingIndex].status : null,
+        after: nextCheckIn.status,
+      },
+    ],
+  });
+
+  database.goals[goalIndex] = updateGoalRecord(goal, {
+    updatedAt: now,
+  });
+
+  await writeDatabase(database);
+
+  return {
+    quarter: input.quarter,
+    goals: database.goals
+      .filter((entry) => entry.employeeId === input.employeeId && entry.approvalStatus === "approved")
+      .sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    checkIns: database.checkIns
+      .filter((checkIn) => checkIn.employeeId === input.employeeId && checkIn.quarter === input.quarter)
+      .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt)),
+    summary: buildCheckInSummary(
+      input.quarter,
+      database.checkIns.filter((checkIn) => checkIn.employeeId === input.employeeId && checkIn.quarter === input.quarter),
+    ),
+  };
 };
 
 export const parseGoalInput = (body: Record<string, unknown>): GoalInput => ({

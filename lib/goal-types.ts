@@ -19,6 +19,9 @@ export const APPROVAL_STATUSES = [
 ] as const;
 export type GoalApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
+export const CHECKIN_STATUSES = ["Not Started", "On Track", "Completed"] as const;
+export type CheckInStatus = (typeof CHECKIN_STATUSES)[number];
+
 export type GoalActorRole = "employee" | "manager" | "admin";
 
 export interface GoalRecord {
@@ -41,6 +44,27 @@ export interface GoalRecord {
   createdAt: string;
   updatedAt: string;
   submittedAt: string | null;
+}
+
+export interface GoalCheckIn {
+  id: string;
+  goalId: string;
+  employeeId: string;
+  quarter: GoalQuarter;
+  actualAchievement: string;
+  status: CheckInStatus;
+  progressPercent: number;
+  notes: string | null;
+  submittedAt: string;
+}
+
+export interface CheckInSummary {
+  quarter: GoalQuarter;
+  totalGoals: number;
+  submittedCheckIns: number;
+  completedCount: number;
+  onTrackCount: number;
+  notStartedCount: number;
 }
 
 export interface GoalInput {
