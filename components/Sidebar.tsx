@@ -17,28 +17,42 @@ export default function Sidebar() {
 
       <nav className="space-y-3">
 
-        <Link
-          href="/employee"
-          className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-        >
-          Dashboard
-        </Link>
+  <Link
+    href="/employee"
+    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+  >
+    Dashboard
+  </Link>
 
-        <Link
-          href="/goals"
-          className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-        >
-          Goals
-        </Link>
+  <Link
+    href="/goals"
+    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+  >
+    Goals
+  </Link>
 
-        <Link
-          href="/analytics"
-          className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-        >
-          Analytics
-        </Link>
+  <Link
+    href="/analytics"
+    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+  >
+    Analytics
+  </Link>
 
-      </nav>
+  <Link
+    href="/checkins"
+    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+  >
+    Check-ins
+  </Link>
+
+  <Link
+    href="/reports"
+    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+  >
+    Reports
+  </Link>
+
+</nav>
 
       <button
         onClick={() => {
