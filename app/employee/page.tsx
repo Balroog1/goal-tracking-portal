@@ -1,7 +1,8 @@
 "use client";
+
 import Link from "next/link";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -9,7 +10,7 @@ export default function DashboardPage() {
 
   const role = localStorage.getItem("role");
 
-  if (!role) {
+  if (role !== "employee") {
 
     router.push("/login");
 
