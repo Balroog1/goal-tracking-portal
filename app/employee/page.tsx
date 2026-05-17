@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Sidebar from "@/components/Sidebar";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -27,43 +28,7 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-black text-white flex">
 
       {/* Sidebar */}
-      <aside className="w-72 bg-white/5 border-r border-white/10 p-6 hidden md:flex flex-col">
-
-        <h1 className="text-3xl font-bold mb-10 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-          GoalPortal
-        </h1>
-
-        <nav className="space-y-3">
-
-          <Link
-            href="/dashboard"
-            className="block px-4 py-3 rounded-xl bg-blue-600"
-          >
-            Dashboard
-          </Link>
-
-          <Link
-            href="/goals"
-            className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-          >
-            Goals
-          </Link>
-
-          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 transition">
-            Check-ins
-          </button>
-
-          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 transition">
-            Analytics
-          </button>
-
-          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 transition">
-            Reports
-          </button>
-
-        </nav>
-
-      </aside>
+      <Sidebar />
 
       {/* Main Content */}
       <section className="flex-1 p-8">
