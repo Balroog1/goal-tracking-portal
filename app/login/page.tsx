@@ -1,10 +1,33 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 export default function LoginPage() {
 
   const router = useRouter();
+  useEffect(() => {
+
+  const role = localStorage.getItem("role");
+
+  if (role === "employee") {
+
+    router.push("/employee");
+
+  }
+
+  else if (role === "manager") {
+
+    router.push("/manager");
+
+  }
+
+  else if (role === "admin") {
+
+    router.push("/admin");
+
+  }
+
+}, [router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
