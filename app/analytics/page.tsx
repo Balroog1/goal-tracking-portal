@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 
 import {
@@ -10,7 +9,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
   PieChart,
   Pie,
   Cell,
