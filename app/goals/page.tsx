@@ -33,30 +33,68 @@ export default function GoalsPage() {
   const [description, setDescription] = useState("");
   const [target, setTarget] = useState("");
   const [weightage, setWeightage] = useState("");
+  const [editingIndex, setEditingIndex] =
+  useState<number | null>(null);
 
   const handleAddGoal = (e: FormEvent) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    const newGoal = {
-      title,
-      description,
-      progress: 0,
-      target,
-      achievement: "0",
-      weightage,
-      status: "Just Started",
-    };
+  const newGoal = {
+    title,
+    description,
+    progress: editingIndex !== null
+      ? goals[editingIndex].progress
+      : 0,
+    target,
+    achievement:
+      editingIndex !== null
+        ? goals[editingIndex].achievement
+        : "0",
+    weightage,
+    status:
+      editingIndex !== null
+        ? goals[editingIndex].status
+        : "Just Started",
+  };
+
+  if (editingIndex !== null) {
+
+    const updatedGoals = [...goals];
+
+    updatedGoals[editingIndex] = newGoal;
+
+    setGoals(updatedGoals);
+
+  } else {
 
     setGoals([newGoal, ...goals]);
 
-    setTitle("");
-    setDescription("");
-    setTarget("");
-    setWeightage("");
+  }
 
-    setShowModal(false);
-  };
+  setTitle("");
+  setDescription("");
+  setTarget("");
+  setWeightage("");
+
+  setEditingIndex(null);
+
+  setShowModal(false);
+};
+  
+const handleEditGoal = (index: number) => {
+
+  const goal = goals[index];
+
+  setTitle(goal.title);
+  setDescription(goal.description);
+  setTarget(goal.target);
+  setWeightage(String(goal.weightage));
+
+  setEditingIndex(index);
+
+  setShowModal(true);
+};
 
   const handleDeleteGoal = (indexToDelete: number) => {
 
@@ -196,6 +234,13 @@ useEffect(() => {
                   </span>
 
                   <button
+                     onClick={() => handleEditGoal(index)}
+                     className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-2 rounded-xl text-sm transition"
+                  >
+                     Edit
+                  </button>
+
+                  <button
                     onClick={() => handleDeleteGoal(index)}
                     className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-xl text-sm transition"
                   >
@@ -289,7 +334,9 @@ useEffect(() => {
             <div className="flex items-center justify-between mb-8">
 
               <h2 className="text-3xl font-bold">
-                Create Goal
+                {editingIndex !== null
+                  ? "Edit Goal"
+                  : "Create Goal"}
               </h2>
 
               <button
@@ -366,7 +413,9 @@ useEffect(() => {
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 transition py-3 rounded-xl font-semibold"
               >
-                Save Goal
+                {editingIndex !== null
+                 ? "Update Goal"
+                 : "Save Goal"}
               </button>
 
             </form>
