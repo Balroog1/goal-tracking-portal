@@ -1,12 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect, FormEvent } from "react";
+type Goal = {
+  title: string;
+  description: string;
+  progress: number;
+  target: string;
+  achievement: string;
+  weightage: number | string;
+  status: string;
+};
 
 export default function GoalsPage() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const [goals, setGoals] = useState([
+  const [goals, setGoals] = useState<Goal[]>([
     {
       title: "Increase Sales Revenue",
       description:
