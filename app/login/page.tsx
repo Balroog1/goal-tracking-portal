@@ -1,5 +1,45 @@
-import Link from "next/link";
+"use client";
+
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 export default function LoginPage() {
+
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = (e: FormEvent) => {
+
+    e.preventDefault();
+
+    if (email === "employee@demo.com") {
+
+      localStorage.setItem("role", "employee");
+
+      router.push("/employee");
+    }
+
+    else if (email === "manager@demo.com") {
+
+      localStorage.setItem("role", "manager");
+
+      router.push("/manager");
+    }
+
+    else if (email === "admin@demo.com") {
+
+      localStorage.setItem("role", "admin");
+
+      router.push("/admin");
+    }
+
+    else {
+
+      alert("Invalid Demo Account");
+
+    }
+  };
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
 
@@ -13,7 +53,7 @@ export default function LoginPage() {
           Login to your Goal Tracking Portal
         </p>
 
-        <form className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-5">
 
           <div>
             <label className="block mb-2 text-sm text-gray-300">
@@ -21,9 +61,11 @@ export default function LoginPage() {
             </label>
 
             <input
-              type="email"
-              placeholder="employee@company.com"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="employee@company.com"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -33,18 +75,20 @@ export default function LoginPage() {
             </label>
 
             <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-purple-500"
+                 type="password"
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 placeholder="••••••••"
+                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-purple-500"
             />
           </div>
 
-          <Link
-  href="/dashboard"
-  className="block text-center w-full bg-blue-600 hover:bg-blue-700 transition rounded-xl py-3 font-semibold"
->
-  Login
-</Link>
+          <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 transition rounded-xl py-3 font-semibold"
+          >
+            Login
+          </button>
 
         </form>
 
