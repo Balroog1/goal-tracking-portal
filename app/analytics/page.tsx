@@ -3,20 +3,79 @@
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
 export default function AnalyticsPage() {
 
   const totalGoals = 8;
   const completedGoals = 5;
   const averageProgress = 74;
 
+  const data = [
+  {
+    name: "Sales",
+    progress: 78,
+  },
+  {
+    name: "Customer",
+    progress: 62,
+  },
+  {
+    name: "Marketing",
+    progress: 90,
+  },
+  {
+    name: "HR",
+    progress: 55,
+  },
+];
+
   return (
     <main className="min-h-screen bg-black text-white flex">
 
       {/* Sidebar */}
       <Sidebar />
-      
+
       {/* Main */}
-      <section className="flex-1 p-8">
+      <section className="flex-1 p-8 min-w-0">
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mt-10">
+
+  <h2 className="text-2xl font-bold mb-6">
+    Goal Progress Analytics
+  </h2>
+
+  <div className="w-full h-[400px] min-w-0">
+
+    <ResponsiveContainer width="100%" height="100%">
+
+      <BarChart data={data}>
+
+        <XAxis dataKey="name" />
+
+        <YAxis />
+
+        <Tooltip />
+
+        <Bar
+          dataKey="progress"
+          radius={[10, 10, 0, 0]}
+        />
+
+      </BarChart>
+
+    </ResponsiveContainer>
+
+  </div>
+
+   </div>
 
         <div className="mb-10">
 
