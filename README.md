@@ -1,50 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Enterprise Goal Tracking Portal
 
-## Supabase Setup
+A full-stack enterprise-grade Goal Setting & Performance Tracking platform built for the **AtomQuest Hackathon 1.0**.
 
-This project now uses Supabase for persistence.
+The portal streamlines employee goal management, approval workflows, quarterly achievement tracking, and performance analytics through a centralized web application.
 
-Create a `.env.local` file with:
+---
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-SUPABASE_URL=your-supabase-url
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
+# 🚀 Live Demo
 
-Then run the SQL in [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor to create the tables and seed demo data.
+🔗 https://goal-tracking-portal-snowy.vercel.app
 
-## Getting Started
+---
 
-First, run the development server:
+# 📌 Problem Statement
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Organizations often rely on fragmented spreadsheets, emails, and manual review cycles for performance tracking, leading to poor visibility, misalignment, and inefficient appraisal workflows.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This project provides a structured digital platform that enables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Goal creation & approval workflows
+- Quarterly performance check-ins
+- Achievement tracking
+- Role-based dashboards
+- Audit-ready governance
+- Real-time analytics & reporting
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+# ✨ Core Features
 
-To learn more about Next.js, take a look at the following resources:
+## 👨‍💼 Employee Portal
+- Create and manage goals
+- Submit goal sheets
+- Quarterly progress updates
+- Achievement tracking
+- Status management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 👨‍💻 Manager Dashboard
+- Review employee goals
+- Approve / reject submissions
+- Inline workflow management
+- Quarterly check-ins
+- Team progress visibility
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛡️ Admin / HR Portal
+- Organizational oversight
+- Reporting & analytics
+- Goal governance
+- Audit visibility
+- Workflow monitoring
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# ✅ Business Rules Implemented
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Total goal weightage must equal **100%**
+- Minimum goal weightage: **10%**
+- Maximum goals per employee: **8**
+- Submitted goals become locked
+- Role-based access enforcement
+- Quarterly tracking workflows
+- Goal approval lifecycle
+
+---
+
+# 📊 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15 |
+| Backend | Next.js API Routes |
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase |
+| Hosting | Vercel |
+| Styling | Tailwind CSS |
+| Version Control | Git & GitHub |
+
+---
+
+# 🏗️ System Architecture
+
+## Architecture Flow
+
+```text
+Users
+   ↓
+Next.js Frontend
+   ↓
+API Routes / Backend Logic
+   ↓
+Supabase Backend
+ ├── PostgreSQL Database
+ ├── Authentication
+ └── Role-Based Access
+   ↓
+Vercel Deployment
