@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/auth-client";
 
 export default function Sidebar() {
 
   const router = useRouter();
+  const pathname = usePathname();
+  const section = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/manager") ? "manager" : "employee";
+  const dashboardHref = `/${section}/dashboard`;
 
   return (
 
@@ -18,47 +21,33 @@ export default function Sidebar() {
 
       <nav className="space-y-3">
 
-  <Link
-    href="/employee"
-    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-  >
-    Dashboard
-  </Link>
+        <Link href={dashboardHref} className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          Dashboard
+        </Link>
 
-  <Link
-    href="/goals"
-    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-  >
-    Goals
-  </Link>
+        <Link href="/goals" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          Goals
+        </Link>
 
-  <Link
-    href="/analytics"
-    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-  >
-    Analytics
-  </Link>
+        <Link href="/analytics" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          Analytics
+        </Link>
 
-  <Link
-    href="/checkins"
-    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-  >
-    Check-ins
-  </Link>
+        <Link href="/checkins" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          Check-ins
+        </Link>
 
-  <Link
-    href="/reports"
-    className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-  >
-    Reports
-  </Link>
+        <Link href="/reports" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+          Reports
+        </Link>
 
 </nav>
 
       <button
         onClick={async () => {
           await logout();
-          router.push("/login");
+          router.replace("/login");
+          router.refresh();
         }}
         className="mt-auto bg-red-500 hover:bg-red-600 transition px-5 py-3 rounded-xl font-semibold"
       >

@@ -14,13 +14,13 @@ export default function Home() {
         </h1>
 
         <div className="flex gap-4">
-          <button className="px-5 py-2 rounded-lg hover:bg-white/10 transition">
+          <Link href="/login" className="px-5 py-2 rounded-lg hover:bg-white/10 transition">
             Login
-          </button>
+          </Link>
 
-          <button className="bg-blue-600 hover:bg-blue-700 transition px-5 py-2 rounded-lg">
+          <Link href="/getting-started" className="bg-blue-600 hover:bg-blue-700 transition px-5 py-2 rounded-lg">
             Get Started
-          </button>
+          </Link>
         </div>
       </nav>
 
@@ -41,16 +41,19 @@ export default function Home() {
 
           <div className="flex gap-5 justify-center flex-wrap">
 
-           <Link
-  href="/login"
-  className="bg-blue-600 hover:bg-blue-700 transition px-8 py-4 rounded-2xl text-lg font-semibold shadow-lg shadow-blue-500/20"
->
-  Employee Login
-</Link>
+            <Link
+              href="/login"
+              className="bg-blue-600 hover:bg-blue-700 transition px-8 py-4 rounded-2xl text-lg font-semibold shadow-lg shadow-blue-500/20"
+            >
+              Employee Login
+            </Link>
 
-            <button className="border border-white/20 hover:border-white/40 hover:bg-white/5 transition px-8 py-4 rounded-2xl text-lg font-semibold">
+            <Link
+              href="/getting-started"
+              className="border border-white/20 hover:border-white/40 hover:bg-white/5 transition px-8 py-4 rounded-2xl text-lg font-semibold"
+            >
               Manager Dashboard
-            </button>
+            </Link>
 
           </div>
 

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { ROLE_HOME, type AppRole } from "@/lib/goal-types";
 import { parseSession, SESSION_COOKIE } from "@/lib/session";
 
-const PUBLIC_PATHS = ["/", "/login", "/api/auth/login", "/api/auth/logout", "/api/auth/session"];
+const PUBLIC_PATHS = ["/", "/login", "/getting-started", "/register", "/api/auth/login", "/api/auth/logout", "/api/auth/session"];
 const ROLE_PATHS: Record<AppRole, string[]> = {
   employee: ["/employee", "/goals", "/checkins"],
   manager: ["/manager"],
-  admin: ["/admin"],
+  admin: ["/admin", "/goals", "/checkins", "/analytics", "/reports", "/employee", "/manager"],
 };
 const SHARED_PATHS = ["/analytics", "/reports", "/api"];
 
@@ -27,7 +27,7 @@ const getRequiredRole = (pathname: string): AppRole | null => {
   return null;
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isPublicPath(pathname)) {

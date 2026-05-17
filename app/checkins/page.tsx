@@ -19,6 +19,12 @@ type CheckInForm = {
   notes: string;
 };
 
+type CheckInPreview = {
+  status: "Not Started" | "On Track" | "Completed";
+  progressPercent: number;
+  message: string;
+};
+
 const getCurrentQuarter = (): GoalQuarter => {
   const month = new Date().getMonth();
 
@@ -33,6 +39,73 @@ const createEmptyForm = (goalId = ""): CheckInForm => ({
   actualAchievement: "",
   notes: "",
 });
+
+const getAchievementPlaceholder = (measurementType: GoalRecord["measurementType"]): string => {
+  switch (measurementType) {
+    case "MIN":
+      return "Enter the achieved value, e.g. 750000";
+    case "MAX":
+      return "Enter the actual value, lower is better, e.g. 3";
+    case "ZERO":
+      return "Enter 0 when complete, otherwise your current count";
+    case "TIMELINE":
+      return "Enter the completion date, e.g. 2026-05-30";
+  }
+};
+
+const calculateCheckInPreview = (goal: GoalRecord, actualAchievement: string): CheckInPreview => {
+  const trimmedActual = actualAchievement.trim();
+
+  if (!trimmedActual) {
+    return { status: "Not Started", progressPercent: 0, message: "Enter a value to preview the computed progress." };
+  }
+
+  if (goal.measurementType === "TIMELINE") {
+    const targetDate = new Date(goal.target);
+    const actualDate = new Date(trimmedActual);
+
+    if (Number.isNaN(targetDate.getTime()) || Number.isNaN(actualDate.getTime())) {
+      return { status: "Not Started", progressPercent: 0, message: "Use a valid date so we can compare it with the target date." };
+    }
+
+    const completed = actualDate.getTime() <= targetDate.getTime();
+    return {
+      status: completed ? "Completed" : "On Track",
+      progressPercent: completed ? 100 : 0,
+      message: completed ? "Submitted on or before the target date." : "The milestone is still open until the target date is reached.",
+    };
+  }
+
+  const targetNumber = Number(goal.target);
+  const actualNumber = Number(trimmedActual);
+
+  if (!Number.isFinite(targetNumber) || !Number.isFinite(actualNumber)) {
+    return { status: "Not Started", progressPercent: 0, message: "Use a numeric value so the progress math can run." };
+  }
+
+  if (goal.measurementType === "ZERO") {
+    return actualNumber === 0
+      ? { status: "Completed", progressPercent: 100, message: "A zero value means the goal is fully complete." }
+      : { status: "On Track", progressPercent: 0, message: "Any non-zero value means the goal still needs work." };
+  }
+
+  if (targetNumber <= 0 || actualNumber < 0) {
+    return { status: "Not Started", progressPercent: 0, message: "Target and actual values must be positive." };
+  }
+
+  const rawProgress = goal.measurementType === "MIN"
+    ? (actualNumber / targetNumber) * 100
+    : (targetNumber / Math.max(actualNumber, 1)) * 100;
+  const progressPercent = Math.min(100, Math.max(0, Math.round(rawProgress)));
+
+  return {
+    status: rawProgress >= 100 ? "Completed" : "On Track",
+    progressPercent,
+    message: goal.measurementType === "MIN"
+      ? "Higher actual values move the progress toward 100%."
+      : "Lower actual values move the progress toward 100%.",
+  };
+};
 
 export default function CheckinsPage() {
   const router = useRouter();
@@ -186,6 +259,10 @@ export default function CheckinsPage() {
     return new Map(checkIns.map((checkIn) => [checkIn.goalId, checkIn]));
   }, [checkIns]);
 
+  const previewByGoal = useMemo(() => {
+    return new Map(goals.map((goal) => [goal.id, calculateCheckInPreview(goal, forms[goal.id]?.actualAchievement ?? "")]));
+  }, [forms, goals]);
+
   const updateForm = (goalId: string, field: keyof CheckInForm, value: string) => {
     setForms((current) => ({
       ...current,
@@ -318,7 +395,9 @@ export default function CheckinsPage() {
                 goals.map((goal) => {
                   const form = forms[goal.id] ?? createEmptyForm(goal.id);
                   const latest = latestCheckInByGoal.get(goal.id);
+                  const preview = previewByGoal.get(goal.id) ?? calculateCheckInPreview(goal, form.actualAchievement);
                   const isTimeline = goal.measurementType === "TIMELINE";
+                  const latestPercent = latest ? Math.min(100, latest.progressPercent) : 0;
 
                   return (
                     <article key={goal.id} className="rounded-3xl border border-white/10 bg-black/30 p-5">
@@ -359,7 +438,7 @@ export default function CheckinsPage() {
                             value={form.actualAchievement}
                             onChange={(event) => updateForm(goal.id, "actualAchievement", event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-blue-500"
-                            placeholder={isTimeline ? "YYYY-MM-DD" : "Enter achieved value"}
+                            placeholder={getAchievementPlaceholder(goal.measurementType)}
                           />
                         </label>
 
@@ -373,6 +452,24 @@ export default function CheckinsPage() {
                           />
                         </label>
 
+                        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm uppercase tracking-[0.25em] text-blue-200">Live Progress Preview</p>
+                              <p className="mt-1 text-lg font-semibold">{preview.status}</p>
+                            </div>
+                            <span className="rounded-full bg-black/30 px-4 py-2 text-sm text-blue-200">
+                              {preview.progressPercent}%
+                            </span>
+                          </div>
+
+                          <div className="mt-3 h-2 rounded-full bg-white/10">
+                            <div className="h-full rounded-full bg-blue-500" style={{ width: `${preview.progressPercent}%` }} />
+                          </div>
+
+                          <p className="mt-3 text-sm text-blue-100/90">{preview.message}</p>
+                        </div>
+
                         <div className="flex flex-wrap gap-3">
                           <button
                             type="submit"
@@ -384,7 +481,7 @@ export default function CheckinsPage() {
 
                           {latest ? (
                             <span className="rounded-xl border border-white/10 px-4 py-3 text-sm text-gray-300">
-                              Last submitted {latest.progressPercent}% progress
+                              Last submitted {latest.status} • {latestPercent}% progress
                             </span>
                           ) : null}
                         </div>
@@ -399,6 +496,9 @@ export default function CheckinsPage() {
           <section className="space-y-6">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <h2 className="text-2xl font-bold">Quarter Status</h2>
+              <p className="mt-2 text-sm text-gray-400">
+                Not Started means no usable input yet. On Track means work is in progress. Completed means the submission meets the goal rule.
+              </p>
               <div className="mt-4 space-y-3">
                 {CHECKIN_STATUSES.map((status) => (
                   <div key={status} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm">
@@ -416,6 +516,16 @@ export default function CheckinsPage() {
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <h2 className="text-2xl font-bold">How Progress Is Calculated</h2>
+              <div className="mt-4 space-y-3 text-sm text-gray-300">
+                <p><span className="font-semibold text-white">MIN:</span> actual / target × 100</p>
+                <p><span className="font-semibold text-white">MAX:</span> target / actual × 100</p>
+                <p><span className="font-semibold text-white">ZERO:</span> actual = 0 → 100%, otherwise 0%</p>
+                <p><span className="font-semibold text-white">TIMELINE:</span> completion date on or before the target date → Completed</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <h2 className="text-2xl font-bold">Recent Check-ins</h2>
               <div className="mt-4 space-y-3">
                 {checkIns.length === 0 ? (
@@ -425,7 +535,7 @@ export default function CheckinsPage() {
                     <div key={checkIn.id} className="rounded-2xl border border-white/10 bg-black/30 p-4">
                       <p className="font-semibold">{checkIn.actualAchievement}</p>
                       <p className="mt-1 text-sm text-gray-400">
-                        {checkIn.status} • {checkIn.progressPercent}% progress
+                        {checkIn.status} • {Math.min(100, checkIn.progressPercent)}% progress
                       </p>
                     </div>
                   ))

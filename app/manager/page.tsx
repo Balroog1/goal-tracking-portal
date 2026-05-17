@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchSession } from "@/lib/auth-client";
+import { fetchSession, logout } from "@/lib/auth-client";
 import { type GoalRecord, type ManagerGoalSummary } from "@/lib/goal-types";
 
 type ManagerDraft = {
@@ -246,8 +246,8 @@ export default function ManagerPage() {
         </div>
 
         <button
-          onClick={() => {
-            localStorage.removeItem("role");
+          onClick={async () => {
+            await logout();
             router.push("/login");
           }}
           className="rounded-xl bg-red-500 px-5 py-3 font-semibold transition hover:bg-red-600"

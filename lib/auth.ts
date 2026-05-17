@@ -25,3 +25,4 @@ export const clearSessionCookie = (): string => `${SESSION_COOKIE}=; Path=/; Htt
 
 export const isRoleAllowed = (role: AppRole | null | undefined, allowed: AppRole[]): boolean =>
   Boolean(role && allowed.includes(role));
+

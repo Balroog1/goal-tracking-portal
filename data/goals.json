@@ -9,17 +9,17 @@
       "uom": "INR",
       "target": "1000000",
       "weightage": 30,
-      "status": "submitted",
-      "approvalStatus": "pending",
+      "status": "draft",
+      "approvalStatus": "rejected",
       "isLocked": false,
-      "reviewedBy": null,
-      "reviewedAt": null,
-      "reviewNotes": null,
+      "reviewedBy": "Manager",
+      "reviewedAt": "2026-05-17T11:03:02.201Z",
+      "reviewNotes": "Rejected by manager",
       "quarter": "Q2",
       "measurementType": "MIN",
       "createdAt": "2026-05-17T10:45:26.339Z",
-      "updatedAt": "2026-05-17T10:49:28.381Z",
-      "submittedAt": "2026-05-17T10:49:28.381Z"
+      "updatedAt": "2026-05-17T11:03:02.201Z",
+      "submittedAt": null
     },
     {
       "id": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
@@ -31,15 +31,15 @@
       "target": "95",
       "weightage": 25,
       "status": "submitted",
-      "approvalStatus": "pending",
-      "isLocked": false,
-      "reviewedBy": null,
-      "reviewedAt": null,
+      "approvalStatus": "approved",
+      "isLocked": true,
+      "reviewedBy": "Manager",
+      "reviewedAt": "2026-05-17T12:01:47.288Z",
       "reviewNotes": null,
       "quarter": "Q2",
       "measurementType": "MAX",
       "createdAt": "2026-05-17T10:45:26.339Z",
-      "updatedAt": "2026-05-17T10:49:28.381Z",
+      "updatedAt": "2026-05-17T12:05:22.978Z",
       "submittedAt": "2026-05-17T10:49:28.381Z"
     },
     {
@@ -52,15 +52,15 @@
       "target": "12",
       "weightage": 20,
       "status": "submitted",
-      "approvalStatus": "pending",
-      "isLocked": false,
-      "reviewedBy": null,
-      "reviewedAt": null,
+      "approvalStatus": "approved",
+      "isLocked": true,
+      "reviewedBy": "Manager",
+      "reviewedAt": "2026-05-17T12:01:49.188Z",
       "reviewNotes": null,
       "quarter": "Q2",
       "measurementType": "ZERO",
       "createdAt": "2026-05-17T10:45:26.339Z",
-      "updatedAt": "2026-05-17T10:49:28.381Z",
+      "updatedAt": "2026-05-17T12:10:20.199Z",
       "submittedAt": "2026-05-17T10:49:28.381Z"
     },
     {
@@ -85,8 +85,322 @@
       "submittedAt": "2026-05-17T10:49:28.381Z"
     }
   ],
-  "checkIns": [],
+  "checkIns": [
+    {
+      "id": "c9f53a4c-1caf-4d61-a1e3-19ec5a67ca6a",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "quarter": "Q2",
+      "actualAchievement": "100",
+      "status": "On Track",
+      "progressPercent": 0,
+      "notes": null,
+      "submittedAt": "2026-05-17T12:10:20.199Z"
+    },
+    {
+      "id": "e7315f8e-ffc4-47c3-8261-c5d844c576d1",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "quarter": "Q2",
+      "actualAchievement": "0",
+      "status": "Completed",
+      "progressPercent": 9500,
+      "notes": null,
+      "submittedAt": "2026-05-17T12:05:22.978Z"
+    }
+  ],
   "auditLog": [
+    {
+      "id": "5d67d272-6a3b-43a3-af84-e24935fe8bb1",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:10:20.199Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "07626f21-f042-46be-90e2-7c91e3820f6e",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:10:08.378Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "3c63d044-8c35-4ee0-bdb3-f7afeebb2ab0",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:10:03.222Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "731da304-9da6-460f-a4af-07610de2f09e",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:09:59.681Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "30810b88-93f7-409c-ad9e-3f4fa692f62e",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:09:54.963Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "27abf29f-66bb-4866-8202-24b259fcf13e",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:09:49.868Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "ce98314d-c555-455f-9b37-a3bd47f0fef8",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:09:45.627Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "On Track",
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "66ed245d-7896-4370-b42a-d565530e4b83",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "created",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:09:38.510Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": null,
+          "after": "On Track"
+        }
+      ]
+    },
+    {
+      "id": "5fe3e85f-1d25-4e85-bbc4-ff78a1151a67",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:05:22.978Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "Completed",
+          "after": "Completed"
+        }
+      ]
+    },
+    {
+      "id": "3590191a-3662-4c66-919f-631ac2d78f39",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:05:18.989Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "Completed",
+          "after": "Completed"
+        }
+      ]
+    },
+    {
+      "id": "8a8b76a6-fb20-4065-a533-8ed65d3dcf56",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:05:11.941Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "Completed",
+          "after": "Completed"
+        }
+      ]
+    },
+    {
+      "id": "c96343bb-ea7e-4924-9b47-cf6dc073c37a",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:05:05.072Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "Completed",
+          "after": "Completed"
+        }
+      ]
+    },
+    {
+      "id": "a65d9d46-8e40-4401-a295-e27395ca6910",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "created",
+      "actorRole": "employee",
+      "actorLabel": "Employee",
+      "timestamp": "2026-05-17T12:04:46.831Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": null,
+          "after": "Completed"
+        }
+      ]
+    },
+    {
+      "id": "b0617985-c45a-4be3-a4db-5ecbf93193ed",
+      "goalId": "0b0f2a40-698d-4b3b-a478-d64b5e1b82b5",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "manager",
+      "actorLabel": "Manager",
+      "timestamp": "2026-05-17T12:01:49.188Z",
+      "changes": [
+        {
+          "field": "approvalStatus",
+          "before": "pending",
+          "after": "approved"
+        },
+        {
+          "field": "isLocked",
+          "before": null,
+          "after": null
+        },
+        {
+          "field": "reviewedBy",
+          "before": null,
+          "after": "Manager"
+        }
+      ]
+    },
+    {
+      "id": "18a62677-c2ab-4b25-8d75-df3aebe5ab4d",
+      "goalId": "160d5ab1-0f0b-4efe-828a-5028b60b6dc1",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "manager",
+      "actorLabel": "Manager",
+      "timestamp": "2026-05-17T12:01:47.288Z",
+      "changes": [
+        {
+          "field": "approvalStatus",
+          "before": "pending",
+          "after": "approved"
+        },
+        {
+          "field": "isLocked",
+          "before": null,
+          "after": null
+        },
+        {
+          "field": "reviewedBy",
+          "before": null,
+          "after": "Manager"
+        }
+      ]
+    },
+    {
+      "id": "7b5ad253-3dc0-4cbd-bb0d-aff431d8fcfe",
+      "goalId": "d4040f31-879b-4f72-b9f0-a14ef7e4a9c8",
+      "employeeId": "employee-demo",
+      "action": "updated",
+      "actorRole": "manager",
+      "actorLabel": "Manager",
+      "timestamp": "2026-05-17T11:03:02.201Z",
+      "changes": [
+        {
+          "field": "status",
+          "before": "submitted",
+          "after": "draft"
+        },
+        {
+          "field": "approvalStatus",
+          "before": "pending",
+          "after": "rejected"
+        },
+        {
+          "field": "reviewedBy",
+          "before": null,
+          "after": "Manager"
+        },
+        {
+          "field": "reviewNotes",
+          "before": null,
+          "after": "Rejected by manager"
+        }
+      ]
+    },
     {
       "id": "623c9a4e-3085-42ca-b536-e86f3a684467",
       "goalId": "employee-demo",

@@ -26,9 +26,9 @@ export type GoalActorRole = "employee" | "manager" | "admin";
 export type AppRole = GoalActorRole;
 
 export const ROLE_HOME: Record<AppRole, string> = {
-  employee: "/employee",
-  manager: "/manager",
-  admin: "/admin",
+  employee: "/employee/dashboard",
+  manager: "/manager/dashboard",
+  admin: "/admin/dashboard",
 };
 
 export interface AuthSession {

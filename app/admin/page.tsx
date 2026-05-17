@@ -175,10 +175,10 @@ export default function AdminPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <button className="bg-blue-600 hover:bg-blue-700 transition rounded-2xl p-6 text-left">
+            <Link href="/admin/employees" className="bg-blue-600 hover:bg-blue-700 transition rounded-2xl p-6 text-left block">
               <h3 className="text-2xl font-bold mb-2">Manage Employees</h3>
               <p className="text-white/70">Add, edit, or remove employee accounts.</p>
-            </button>
+            </Link>
 
             <Link href="/reports" className="bg-purple-600 hover:bg-purple-700 transition rounded-2xl p-6 text-left block">
               <h3 className="text-2xl font-bold mb-2">Generate Reports</h3>
