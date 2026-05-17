@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { buildGoalErrorMessage, createActor, managerUpdateGoal } from "@/lib/goals";
+import { buildGoalErrorMessage, createActor, updateManagerGoal } from "@/lib/goals";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function PATCH(
       actorLabel?: string;
     };
 
-    const payload = await managerUpdateGoal(
+    const payload = await updateManagerGoal(
       goalId,
       {
         target: body.target,
