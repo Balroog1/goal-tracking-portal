@@ -67,6 +67,35 @@ export interface CheckInSummary {
   notStartedCount: number;
 }
 
+export type ProgressScope = "employee" | "company";
+
+export interface GoalProgressRecord {
+  goal: GoalRecord;
+  latestCheckIn: GoalCheckIn | null;
+  status: CheckInStatus;
+  progressPercent: number;
+  weightedContribution: number;
+}
+
+export interface ProgressSummary {
+  scope: ProgressScope;
+  quarter: GoalQuarter;
+  totalGoals: number;
+  submittedCheckIns: number;
+  completedCount: number;
+  onTrackCount: number;
+  notStartedCount: number;
+  averageProgressPercent: number;
+  weightedProgressPercent: number;
+  totalWeightage: number;
+  employeeCount: number;
+}
+
+export interface ProgressDashboard {
+  goals: GoalProgressRecord[];
+  summary: ProgressSummary;
+}
+
 export interface GoalInput {
   title: string;
   description: string;

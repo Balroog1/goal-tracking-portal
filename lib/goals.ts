@@ -14,11 +14,15 @@ import {
   type GoalActorRole,
   type GoalChange,
   type GoalInput,
+  type GoalProgressRecord,
   type GoalRecord,
   type ManagerGoalSummary,
+  type ProgressDashboard,
   type GoalSummary,
   type GoalQuarter,
   type MeasurementType,
+  type ProgressScope,
+  type ProgressSummary,
 } from "./goal-types";
 
 interface GoalsDatabase {
@@ -334,6 +338,10 @@ const parseNumericValue = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const normalizeProgressPercent = (value: number): number => Math.max(0, Math.round(value));
+
+const clampProgressPercent = (value: number): number => Math.min(100, normalizeProgressPercent(value));
+
 const getCurrentQuarter = (): GoalQuarter => {
   const month = new Date().getMonth();
 
@@ -358,12 +366,12 @@ const calculateCheckInResult = (
     const actualDate = new Date(trimmedActual);
 
     if (Number.isNaN(targetDate.getTime()) || Number.isNaN(actualDate.getTime())) {
-      return { status: "On Track", progressPercent: 50 };
+      return { status: "On Track", progressPercent: 0 };
     }
 
     return actualDate.getTime() <= targetDate.getTime()
       ? { status: "Completed", progressPercent: 100 }
-      : { status: "On Track", progressPercent: 50 };
+      : { status: "On Track", progressPercent: 0 };
   }
 
   const targetNumber = parseNumericValue(goal.target);
@@ -384,12 +392,80 @@ const calculateCheckInResult = (
   }
 
   const progressPercent = goal.measurementType === "MIN"
-    ? Math.round((actualNumber / targetNumber) * 100)
-    : Math.round((targetNumber / Math.max(actualNumber, 1)) * 100);
+    ? normalizeProgressPercent((actualNumber / targetNumber) * 100)
+    : normalizeProgressPercent((targetNumber / Math.max(actualNumber, 1)) * 100);
 
   return progressPercent >= 100
     ? { status: "Completed", progressPercent }
     : { status: "On Track", progressPercent };
+};
+
+const buildProgressRecord = (
+  goal: GoalRecord,
+  latestCheckIn: GoalCheckIn | null,
+): GoalProgressRecord => {
+  const progressPercent = latestCheckIn?.progressPercent ?? 0;
+
+  return {
+    goal,
+    latestCheckIn,
+    status: latestCheckIn?.status ?? "Not Started",
+    progressPercent,
+    weightedContribution: normalizeProgressPercent(clampProgressPercent(progressPercent) * goal.weightage / 100),
+  };
+};
+
+const buildProgressSummary = (
+  quarter: GoalQuarter,
+  scope: ProgressScope,
+  goals: GoalRecord[],
+  records: GoalProgressRecord[],
+): ProgressSummary => {
+  const totalWeightage = goals.reduce((sum, goal) => sum + goal.weightage, 0);
+  const progressTotals = records.reduce((sum, record) => sum + clampProgressPercent(record.progressPercent), 0);
+  const weightedTotals = records.reduce(
+    (sum, record) => sum + (clampProgressPercent(record.progressPercent) * record.goal.weightage) / 100,
+    0,
+  );
+
+  return {
+    scope,
+    quarter,
+    totalGoals: goals.length,
+    submittedCheckIns: records.filter((record) => record.latestCheckIn !== null).length,
+    completedCount: records.filter((record) => record.status === "Completed").length,
+    onTrackCount: records.filter((record) => record.status === "On Track").length,
+    notStartedCount: records.filter((record) => record.status === "Not Started").length,
+    averageProgressPercent: goals.length > 0 ? Math.round(progressTotals / goals.length) : 0,
+    weightedProgressPercent: totalWeightage > 0 ? Math.round((weightedTotals / totalWeightage) * 100) : 0,
+    totalWeightage,
+    employeeCount: new Set(goals.map((goal) => goal.employeeId)).size,
+  };
+};
+
+const buildProgressDashboard = (
+  quarter: GoalQuarter,
+  scope: ProgressScope,
+  goals: GoalRecord[],
+  checkIns: GoalCheckIn[],
+): ProgressDashboard => {
+  const latestCheckInsByGoal = new Map<string, GoalCheckIn>();
+
+  for (const checkIn of checkIns) {
+    const current = latestCheckInsByGoal.get(checkIn.goalId);
+
+    if (!current || current.submittedAt.localeCompare(checkIn.submittedAt) < 0) {
+      latestCheckInsByGoal.set(checkIn.goalId, checkIn);
+    }
+  }
+
+  const records = goals.map((goal) => buildProgressRecord(goal, latestCheckInsByGoal.get(goal.id) ?? null))
+    .sort((left, right) => right.progressPercent - left.progressPercent || left.goal.createdAt.localeCompare(right.goal.createdAt));
+
+  return {
+    goals: records,
+    summary: buildProgressSummary(quarter, scope, goals, records),
+  };
 };
 
 const buildCheckInSummary = (quarter: GoalQuarter, records: GoalCheckIn[]): CheckInSummary => ({
@@ -800,6 +876,35 @@ export const getEmployeeCheckIns = async (
     checkIns,
     summary: buildCheckInSummary(quarter, checkIns),
   };
+};
+
+export const getEmployeeProgress = async (
+  employeeId: string,
+  quarter: GoalQuarter = getCurrentQuarter(),
+): Promise<ProgressDashboard> => {
+  const database = await readDatabase();
+  const goals = database.goals
+    .filter((goal) => goal.employeeId === employeeId && goal.approvalStatus === "approved" && goal.quarter === quarter)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const checkIns = database.checkIns
+    .filter((checkIn) => checkIn.employeeId === employeeId && checkIn.quarter === quarter)
+    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+
+  return buildProgressDashboard(quarter, "employee", goals, checkIns);
+};
+
+export const getCompanyProgress = async (
+  quarter: GoalQuarter = getCurrentQuarter(),
+): Promise<ProgressDashboard> => {
+  const database = await readDatabase();
+  const goals = database.goals
+    .filter((goal) => goal.approvalStatus === "approved" && goal.quarter === quarter)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const checkIns = database.checkIns
+    .filter((checkIn) => checkIn.quarter === quarter)
+    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+
+  return buildProgressDashboard(quarter, "company", goals, checkIns);
 };
 
 export const submitEmployeeCheckIn = async (
