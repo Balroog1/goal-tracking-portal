@@ -141,6 +141,72 @@ export default function DashboardPage() {
 
         </div>
 
+      <div className="mt-10 bg-white/5 border border-white/10 rounded-3xl p-8">
+
+  <h2 className="text-3xl font-bold mb-6">
+    Recent Activity
+  </h2>
+
+  <div className="space-y-5">
+
+    <div className="flex items-start gap-4">
+
+      <div className="w-3 h-3 bg-green-400 rounded-full mt-2"></div>
+
+      <div>
+
+        <p className="font-semibold">
+          Sales Revenue goal updated
+        </p>
+
+        <p className="text-gray-400 text-sm">
+          Progress increased to 78%
+        </p>
+
+      </div>
+
+    </div>
+
+    <div className="flex items-start gap-4">
+
+      <div className="w-3 h-3 bg-blue-400 rounded-full mt-2"></div>
+
+      <div>
+
+        <p className="font-semibold">
+          New goal created
+        </p>
+
+        <p className="text-gray-400 text-sm">
+          Customer Satisfaction goal added
+        </p>
+
+      </div>
+
+    </div>
+
+    <div className="flex items-start gap-4">
+
+      <div className="w-3 h-3 bg-purple-400 rounded-full mt-2"></div>
+
+      <div>
+
+        <p className="font-semibold">
+          Analytics report generated
+        </p>
+
+        <p className="text-gray-400 text-sm">
+          Weekly performance report exported
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+      
       </section>
 
     </main>
