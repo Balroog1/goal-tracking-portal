@@ -1,6 +1,15 @@
+"use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
+    const router = useRouter();
+    const handleLogout = () => {
+
+  localStorage.removeItem("role");
+
+  router.push("/login");
+};
   return (
     <main className="min-h-screen bg-black text-white flex">
 
@@ -47,21 +56,18 @@ export default function DashboardPage() {
       <section className="flex-1 p-8">
 
         {/* Top Bar */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center gap-4">
 
-          <div>
-            <h1 className="text-4xl font-bold">
-              Employee Dashboard
-            </h1>
+            <div className="bg-white/5 border border-white/10 px-5 py-3 rounded-xl">
+              Q2 Check-in Active
+            </div>
 
-            <p className="text-gray-400 mt-2">
-              Welcome back, Employee
-            </p>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 px-5 py-3 rounded-xl">
-            Q2 Check-in Active
-          </div>
+             <button
+               onClick={handleLogout}
+               className="bg-red-500 hover:bg-red-600 transition px-5 py-3 rounded-xl font-semibold"
+             >
+              Logout
+             </button>
 
         </div>
 
