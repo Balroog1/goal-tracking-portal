@@ -9,6 +9,8 @@ import {
   MEASUREMENT_TYPES,
   QUARTERS,
   type AuditEntry,
+  type AuditReport,
+  type AuditReportSummary,
   type CheckInSummary,
   type GoalCheckIn,
   type GoalActorRole,
@@ -1016,6 +1018,23 @@ export const parseGoalInput = (body: Record<string, unknown>): GoalInput => ({
 });
 
 export const getDefaultEmployeeId = (): string => DEFAULT_EMPLOYEE_ID;
+
+export const getAuditReport = async (limit = 25): Promise<AuditReport> => {
+  const database = await readDatabase();
+  const entries = database.auditLog.slice(0, limit);
+
+  const summary: AuditReportSummary = {
+    totalEntries: database.auditLog.length,
+    createdCount: database.auditLog.filter((entry) => entry.action === "created").length,
+    updatedCount: database.auditLog.filter((entry) => entry.action === "updated").length,
+    deletedCount: database.auditLog.filter((entry) => entry.action === "deleted").length,
+    submittedCount: database.auditLog.filter((entry) => entry.action === "submitted").length,
+    employeeCount: new Set(database.auditLog.map((entry) => entry.employeeId)).size,
+    actorCount: new Set(database.auditLog.map((entry) => `${entry.actorRole}:${entry.actorLabel}`)).size,
+  };
+
+  return { entries, summary };
+};
 
 export const createActor = (role: GoalActorRole, label: string): MutationActor => ({
   role,

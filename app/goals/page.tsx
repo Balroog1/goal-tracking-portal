@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
-  DEFAULT_EMPLOYEE_ID,
   GOAL_LIMIT,
   MEASUREMENT_TYPES,
   QUARTERS,
@@ -69,7 +68,7 @@ export default function GoalsPage() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/goals?employeeId=${DEFAULT_EMPLOYEE_ID}`, {
+        const response = await fetch(`/api/goals`, {
           cache: "no-store",
         });
         const payload = (await response.json()) as { goals?: GoalRecord[]; error?: string };
@@ -104,7 +103,7 @@ export default function GoalsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/goals?employeeId=${DEFAULT_EMPLOYEE_ID}`, {
+      const response = await fetch(`/api/goals`, {
         cache: "no-store",
       });
       const payload = (await response.json()) as { goals?: GoalRecord[]; error?: string };
@@ -154,7 +153,6 @@ export default function GoalsPage() {
     setSuccess(null);
 
     const payload = {
-      employeeId: DEFAULT_EMPLOYEE_ID,
       title: form.title,
       description: form.description,
       thrustArea: form.thrustArea,
@@ -163,7 +161,6 @@ export default function GoalsPage() {
       weightage: Number(form.weightage),
       quarter: form.quarter,
       measurementType: form.measurementType,
-      actorLabel: "Employee",
     };
 
     try {
@@ -204,7 +201,6 @@ export default function GoalsPage() {
       const response = await fetch(`/api/goals/${goalId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actorLabel: "Employee" }),
       });
 
       const result = (await response.json()) as { goals?: GoalRecord[]; error?: string };
@@ -229,7 +225,7 @@ export default function GoalsPage() {
       const response = await fetch("/api/goals/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: DEFAULT_EMPLOYEE_ID, actorLabel: "Employee" }),
+        body: JSON.stringify({}),
       });
 
       const result = (await response.json()) as { goals?: GoalRecord[]; error?: string };

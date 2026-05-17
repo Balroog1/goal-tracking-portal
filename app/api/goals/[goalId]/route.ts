@@ -6,6 +6,7 @@ import {
   parseGoalInput,
   updateEmployeeGoal,
 } from "@/lib/goals";
+import { getCurrentSession, isRoleAllowed } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,12 +16,18 @@ export async function PATCH(
   context: { params: { goalId: string } | Promise<{ goalId: string }> },
 ) {
   try {
+    const session = await getCurrentSession();
+
+    if (!session || !isRoleAllowed(session.role, ["employee"])) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const { goalId } = await Promise.resolve(context.params);
     const body = (await request.json()) as Record<string, unknown>;
     const result = await updateEmployeeGoal(
       goalId,
       parseGoalInput(body),
-      createActor("employee", typeof body.actorLabel === "string" && body.actorLabel.trim() ? body.actorLabel.trim() : "Employee"),
+      createActor(session.role, session.label),
     );
 
     return NextResponse.json(result);
@@ -34,11 +41,16 @@ export async function DELETE(
   context: { params: { goalId: string } | Promise<{ goalId: string }> },
 ) {
   try {
+    const session = await getCurrentSession();
+
+    if (!session || !isRoleAllowed(session.role, ["employee"])) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const { goalId } = await Promise.resolve(context.params);
-    const body = (await request.json().catch(() => ({}))) as { actorLabel?: string };
     const result = await deleteEmployeeGoal(
       goalId,
-      createActor("employee", body.actorLabel?.trim() || "Employee"),
+      createActor(session.role, session.label),
     );
 
     return NextResponse.json(result);

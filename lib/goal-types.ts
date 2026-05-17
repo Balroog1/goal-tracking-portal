@@ -153,3 +153,18 @@ export interface AuditEntry {
   timestamp: string;
   changes: GoalChange[];
 }
+
+export interface AuditReportSummary {
+  totalEntries: number;
+  createdCount: number;
+  updatedCount: number;
+  deletedCount: number;
+  submittedCount: number;
+  employeeCount: number;
+  actorCount: number;
+}
+
+export interface AuditReport {
+  entries: AuditEntry[];
+  summary: AuditReportSummary;
+}

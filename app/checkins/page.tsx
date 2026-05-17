@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { fetchSession } from "@/lib/auth-client";
 import {
   CHECKIN_STATUSES,
-  DEFAULT_EMPLOYEE_ID,
   QUARTERS,
   type CheckInSummary,
   type GoalCheckIn,
@@ -47,11 +47,21 @@ export default function CheckinsPage() {
   const [forms, setForms] = useState<Record<string, CheckInForm>>({});
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
+    let active = true;
 
-    if (role !== "employee") {
-      router.push("/login");
-    }
+    const guard = async () => {
+      const session = await fetchSession();
+
+      if (active && session?.role !== "employee") {
+        router.push("/login");
+      }
+    };
+
+    void guard();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   const loadCheckIns = async (nextQuarter = quarter) => {
@@ -60,7 +70,7 @@ export default function CheckinsPage() {
 
     try {
       const response = await fetch(
-        `/api/checkins?employeeId=${DEFAULT_EMPLOYEE_ID}&quarter=${nextQuarter}`,
+        `/api/checkins?quarter=${nextQuarter}`,
         { cache: "no-store" },
       );
       const payload = (await response.json()) as {
@@ -113,7 +123,7 @@ export default function CheckinsPage() {
 
       try {
         const response = await fetch(
-          `/api/checkins?employeeId=${DEFAULT_EMPLOYEE_ID}&quarter=${quarter}`,
+          `/api/checkins?quarter=${quarter}`,
           { cache: "no-store" },
         );
         const payload = (await response.json()) as {
@@ -200,11 +210,9 @@ export default function CheckinsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           goalId,
-          employeeId: DEFAULT_EMPLOYEE_ID,
           quarter,
           actualAchievement: form?.actualAchievement,
           notes: form?.notes,
-          actorLabel: "Employee",
         }),
       });
 

@@ -1,28 +1,19 @@
 import { NextResponse } from "next/server";
-import { buildGoalErrorMessage, createActor, managerApproveGoal } from "@/lib/goals";
+import { buildGoalErrorMessage, getAuditReport } from "@/lib/goals";
 import { getCurrentSession, isRoleAllowed } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  request: Request,
-  context: { params: { goalId: string } | Promise<{ goalId: string }> },
-) {
+export async function GET() {
   try {
     const session = await getCurrentSession();
 
-    if (!session || !isRoleAllowed(session.role, ["manager"])) {
+    if (!session || !isRoleAllowed(session.role, ["employee", "manager", "admin"])) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
-    const { goalId } = await Promise.resolve(context.params);
-
-    const payload = await managerApproveGoal(
-      goalId,
-      createActor(session.role, session.label),
-    );
-
+    const payload = await getAuditReport(100);
     return NextResponse.json(payload);
   } catch (error) {
     return NextResponse.json({ error: buildGoalErrorMessage(error) }, { status: 400 });

@@ -7,29 +7,37 @@ import {
   getEmployeeGoals,
   parseGoalInput,
 } from "@/lib/goals";
+import { getCurrentSession, isRoleAllowed } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const employeeId = url.searchParams.get("employeeId") ?? getDefaultEmployeeId();
-  const payload = await getEmployeeGoals(employeeId);
+export async function GET() {
+  const session = await getCurrentSession();
+
+  if (!session || !isRoleAllowed(session.role, ["employee", "admin"])) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  const payload = await getEmployeeGoals(getDefaultEmployeeId());
 
   return NextResponse.json(payload);
 }
 
 export async function POST(request: Request) {
   try {
+    const session = await getCurrentSession();
+
+    if (!session || !isRoleAllowed(session.role, ["employee"])) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
     const body = (await request.json()) as Record<string, unknown>;
-    const employeeId = typeof body.employeeId === "string" && body.employeeId.trim()
-      ? body.employeeId.trim()
-      : getDefaultEmployeeId();
 
     const result = await createEmployeeGoal(
-      employeeId,
+      getDefaultEmployeeId(),
       parseGoalInput(body),
-      createActor("employee", typeof body.actorLabel === "string" && body.actorLabel.trim() ? body.actorLabel.trim() : "Employee"),
+      createActor(session.role, session.label),
     );
 
     return NextResponse.json(result, { status: 201 });

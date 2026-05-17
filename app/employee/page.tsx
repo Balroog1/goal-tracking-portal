@@ -7,7 +7,6 @@ import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { fetchSession } from "@/lib/auth-client";
 import {
-  DEFAULT_EMPLOYEE_ID,
   QUARTERS,
   type GoalProgressRecord,
   type GoalQuarter,
@@ -55,7 +54,7 @@ export default function DashboardPage() {
 
       try {
         const response = await fetch(
-          `/api/progress?employeeId=${DEFAULT_EMPLOYEE_ID}&quarter=${quarter}`,
+          `/api/progress?quarter=${quarter}`,
           { cache: "no-store" },
         );
         const payload = (await response.json()) as ProgressDashboard & { error?: string };

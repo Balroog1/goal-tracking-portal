@@ -5,18 +5,22 @@ import {
   getDefaultEmployeeId,
   submitEmployeeGoals,
 } from "@/lib/goals";
+import { getCurrentSession, isRoleAllowed } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const body = (await request.json()) as { employeeId?: string; actorLabel?: string };
-    const employeeId = body.employeeId?.trim() || getDefaultEmployeeId();
+    const session = await getCurrentSession();
+
+    if (!session || !isRoleAllowed(session.role, ["employee"])) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
 
     const result = await submitEmployeeGoals(
-      employeeId,
-      createActor("employee", body.actorLabel?.trim() || "Employee"),
+      getDefaultEmployeeId(),
+      createActor(session.role, session.label),
     );
 
     return NextResponse.json(result);

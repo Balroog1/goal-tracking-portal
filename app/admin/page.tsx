@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { fetchSession } from "@/lib/auth-client";
@@ -179,10 +180,10 @@ export default function AdminPage() {
               <p className="text-white/70">Add, edit, or remove employee accounts.</p>
             </button>
 
-            <button className="bg-purple-600 hover:bg-purple-700 transition rounded-2xl p-6 text-left">
+            <Link href="/reports" className="bg-purple-600 hover:bg-purple-700 transition rounded-2xl p-6 text-left block">
               <h3 className="text-2xl font-bold mb-2">Generate Reports</h3>
               <p className="text-white/70">Export company performance reports.</p>
-            </button>
+            </Link>
           </div>
         </div>
 
