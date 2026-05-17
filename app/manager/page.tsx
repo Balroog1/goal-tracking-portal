@@ -47,6 +47,102 @@ export default function ManagerPage() {
         Review employee performance and analytics.
       </p>
 
+      <div className="mt-10 bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+
+  <table className="w-full">
+
+    <thead className="bg-white/10">
+
+      <tr>
+
+        <th className="text-left p-4">
+          Employee
+        </th>
+
+        <th className="text-left p-4">
+          Department
+        </th>
+
+        <th className="text-left p-4">
+          Goals Completed
+        </th>
+
+        <th className="text-left p-4">
+          Performance
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      <tr className="border-t border-white/10">
+
+        <td className="p-4">
+          John Doe
+        </td>
+
+        <td className="p-4">
+          Sales
+        </td>
+
+        <td className="p-4">
+          8 / 10
+        </td>
+
+        <td className="p-4 text-green-400">
+          Excellent
+        </td>
+
+      </tr>
+
+      <tr className="border-t border-white/10">
+
+        <td className="p-4">
+          Sarah Lee
+        </td>
+
+        <td className="p-4">
+          Marketing
+        </td>
+
+        <td className="p-4">
+          6 / 10
+        </td>
+
+        <td className="p-4 text-yellow-400">
+          Good
+        </td>
+
+      </tr>
+
+      <tr className="border-t border-white/10">
+
+        <td className="p-4">
+          Michael Chen
+        </td>
+
+        <td className="p-4">
+          Engineering
+        </td>
+
+        <td className="p-4">
+          9 / 10
+        </td>
+
+        <td className="p-4 text-green-400">
+          Excellent
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
+
     </main>
 
   );
