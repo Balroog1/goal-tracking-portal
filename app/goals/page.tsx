@@ -115,24 +115,49 @@ const handleEditGoal = (index: number) => {
     setGoals(updatedGoals);
   };
 
-  const updateProgress = (
-    indexToUpdate: number,
-    amount: number
-  ) => {
+const updateProgress = (
+  indexToUpdate: number,
+  amount: number
+) => {
 
-    const updatedGoals = [...goals];
+  const updatedGoals = [...goals];
 
-    updatedGoals[indexToUpdate].progress =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          updatedGoals[indexToUpdate].progress + amount
-        )
-      );
+  updatedGoals[indexToUpdate].progress =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        updatedGoals[indexToUpdate].progress + amount
+      )
+    );
 
-    setGoals(updatedGoals);
-  };
+  const progress =
+    updatedGoals[indexToUpdate].progress;
+
+  if (progress >= 80) {
+
+    updatedGoals[indexToUpdate].status =
+      "Completed";
+
+  }
+
+  else if (progress >= 40) {
+
+    updatedGoals[indexToUpdate].status =
+      "In Progress";
+
+  }
+
+  else {
+
+    updatedGoals[indexToUpdate].status =
+      "Behind";
+
+  }
+
+  setGoals(updatedGoals);
+};
+  
 
   useEffect(() => {
 
@@ -207,7 +232,18 @@ useEffect(() => {
 
                 <div className="flex items-center gap-3">
 
-                  <span className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm">
+                  <span
+                       className={`px-4 py-2 rounded-full text-sm
+
+                        ${goal.status === "Completed"
+                        ? "bg-green-500/20 text-green-400"
+
+                        : goal.status === "In Progress"
+                        ? "bg-yellow-500/20 text-yellow-400"
+
+                        : "bg-red-500/20 text-red-400"}
+                        `}
+                  >
                     {goal.status}
                   </span>
 
